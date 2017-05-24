@@ -12,7 +12,6 @@ Created on Thu Jan 14 18:34:21 2016
 @author: gmw
 """
 
-import os as _os
 from osa import Client
 import numpy as _np
 import matplotlib.pyplot as _plt

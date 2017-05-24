@@ -18,13 +18,14 @@ import numpy as _np
 # import pybaseutils.utils as _ut
 from osa import Client as _cl
 from pyversion import version as _ver
+import pybaseutils as _pyut
 from pybaseutils import utils as _ut
 
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
 
 
-class VMECrest(_ut.Struct):
+class VMECrest(_pyut.Struct):
 
     # Import the VMEC rest client
     vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v5?wsdl")
@@ -367,7 +368,7 @@ class VMECrest(_ut.Struct):
 # ----------------------------------------------------------------- #
 
 
-class w7xfield(_ut.Struct):
+class w7xfield(_pyut.Struct):
 
     nwindings = [108, 108, 108, 108, 108, 36, 36]
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
@@ -473,11 +474,11 @@ class w7xfield(_ut.Struct):
     def __w7xconfigs__(self):
         # Coil currents per winding
 
-        config = {'A': _ut.Struct(), 'B': _ut.Struct(),
-                  'C': _ut.Struct(), 'D': _ut.Struct(),
-                  'E': _ut.Struct(), 'F': _ut.Struct(),
-                  'G': _ut.Struct(), 'H': _ut.Struct(),
-                  'I': _ut.Struct(), 'J': _ut.Struct()}
+        config = {'A': _pyut.Struct(), 'B': _pyut.Struct(),
+                  'C': _pyut.Struct(), 'D': _pyut.Struct(),
+                  'E': _pyut.Struct(), 'F': _pyut.Struct(),
+                  'G': _pyut.Struct(), 'H': _pyut.Struct(),
+                  'I': _pyut.Struct(), 'J': _pyut.Struct()}
 
         # Average magnetic field strength on the magnetic-axis
         avgB0 = _np.array([2.50], dtype=_np.float64)
