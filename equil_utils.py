@@ -366,6 +366,22 @@ class VMECrest(Struct):
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
 
+def url_exists(request):
+    resp = None
+    try: 
+        resp = _ver.urllib.urlopen(request)  # @UndefinedVariable
+    except: 
+#        raise
+        raise #Exception()
+    finally:
+        if resp is not None:
+            resp.close()
+            urlexists = True
+        else:
+            urlexists = False
+        #endif
+    #end try
+    return urlexists 
 
 class w7xfield(Struct):
 
@@ -414,16 +430,18 @@ class w7xfield(Struct):
         folderurl05 = vmecname+'/05/0000/'
         try:
             url01 = baseurl+folderurl01+kVMECfile01
-            with _ver.urllib.urlopen(url01) as f:  # @UnusedVariable
-                existsUrl01 = True
+            existsUrl01 = url_exists(url01)
+#            with _ver.urllib.urlopen(url01) as f:  # @UnusedVariable
+#                existsUrl01 = True
         except IOError:
             existsUrl01 = False
         # endtry
 
         try:
             url05 = baseurl+folderurl05+kVMECfile05
-            with _ver.urllib.urlopen(url05) as f:  # @UnusedVariable
-                existsUrl05 = True
+            existsUrl05 = url_exists(url05)
+#            with _ver.urllib.urlopen(url05) as f:  # @UnusedVariable
+#                existsUrl05 = True
         except IOError:
             existsUrl05 = False
         # endtry
