@@ -5,13 +5,6 @@ Created on Thu Jul 28 11:46:26 2016
 @author: gawe
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jan 14 18:34:21 2016
-
-@author: gmw
-"""
-
 # ========================================================================== #    
 
 from __future__ import absolute_import, with_statement, absolute_import, \
