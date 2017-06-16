@@ -17,6 +17,8 @@ import os as _os
 import numpy as _np
 from osa import Client as _cl
 from pyversion import version as _ver
+import getpass as _gp
+
 
 from .. import utils as _ut
 from ..Struct import Struct
@@ -27,7 +29,7 @@ from ..Struct import Struct
 class VMECrest(Struct):
 
     # Import the VMEC rest client
-    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v5?wsdl")
+    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v6?wsdl")
     rooturl = 'http://10.66.24.160/'
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
@@ -63,6 +65,12 @@ class VMECrest(Struct):
             vmecid = self.vmecid
         # endif
         self.currents = self.vmec.service.getCoilCurrents(vmecid)
+        return self.currents
+
+    def loadCoilCurrents(self, experimentID):
+        from . import w7x_currents as _curr
+        
+        self.currents = _curr.get_w7x_currents(experimentID)
         return self.currents
 
     def getFluxSurfaces(self, torFi=None, numPoints=100, vmecid=None,
@@ -139,6 +147,52 @@ class VMECrest(Struct):
         # endif
         FP = self.vmec.service.getFieldPeriod(vmecid)
         return FP
+        
+    def get_new_id(self):
+    
+        # get all identifiers so far
+        vmec_ids = self.vmec.service.listIdentifiers().VmecIds
+        
+        # get current username
+        user_id = _gp.getuser()
+        
+        # get all runs associated with the current user
+        matching = [s for s in vmec_ids if user_id in s]
+        
+        # get number of runs which are associated with the current user
+        num_runs = _np.size(matching)
+        
+        # generate new id: username + "_" + (number+1)
+        new_id = user_id + "_" + _np.str(num_runs+1)
+        
+        # debug output
+        if (self.verbose):
+            print("issuing vmec id " + new_id)
+            
+        return new_id
+        
+    def get_new_Mgrid_id(self, comment=''):
+    
+        # get all identifiers so far
+        mgrid_ids = self.vmec.service.listIdentifiers().MgridIds
+        
+        # get current username
+        user_id = _gp.getuser()
+        
+        # get all runs associated with the current user
+        matching = [s for s in mgrid_ids if user_id in s]
+        
+        # get number of runs which are associated with the current user
+        num_runs = _np.size(matching)
+        
+        # generate new id: username + "_" + (number+1)
+        new_id = user_id + "_" + comment + '_' + _np.str(num_runs+1)
+        
+        # debug output
+        if (self.verbose):
+            print("issuing Mgrid id " + new_id)
+            
+        return new_id
 
     # ----------------------------------------- #
     # ----------------------------------------- #
@@ -356,6 +410,19 @@ class VMECrest(Struct):
         return self.Vol_lcfs, self.dVdrho
 
     # ------------------------------------------------- #
+    
+    def createMgrid(self, id, magconf, minR, maxR, minZ, maxZ, resR, resZ, resPhi,
+                    fieldPeriods=5, isStellaratorSymmetric=True):
+        
+        return_id = self.vmec.service.createMgrid(magconf, minR, maxR, resR, minZ, maxZ, resZ, resPhi,
+                                      isStellaratorSymmetric, fieldPeriods, id)
+        if return_id == id:
+            return return_id
+        else:
+            print("returned ID from Mgrid does not match given: "+return_id)
+            return return_id
+        
+        
 
 #    def plotSurfaces(self):
 #
