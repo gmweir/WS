@@ -15,7 +15,7 @@ from __future__ import absolute_import, with_statement, absolute_import, \
 # ========================================================================== #    
 
 __version__ = "2017.05.24.15"
-__all__ = ['equil_utils','magfield', 'w7x_currents']
+__all__ = ['equil_utils','magfield'] #, 'w7x_currents']
 
 from ..ssh import CheckWebServicesConnection
 
@@ -30,7 +30,7 @@ if CheckWebServicesConnection():  # returns a boolean True if the pinger receive
     # end try 
 
     if __osaonpath__:                  
-        from . import equil_utils, magfield, w7x_currents  # analysis:ignore
+        from . import equil_utils, magfield #, w7x_currents  # analysis:ignore
         from .equil_utils import VMECrest, w7xfield  # analysis:ignore            
     # endif
 else:  # no packet received from Webservices
