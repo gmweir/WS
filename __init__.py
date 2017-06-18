@@ -15,7 +15,7 @@ from __future__ import absolute_import, with_statement, absolute_import, \
 # ========================================================================== #    
 
 __version__ = "2017.05.24.15"
-__all__ = ['equil_utils','magfield'] #, 'w7x_currents']
+__all__ = ['equil_utils','magfield']
 
 from ..ssh import CheckWebServicesConnection
 
