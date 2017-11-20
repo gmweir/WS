@@ -653,7 +653,7 @@ class w7xfield(Struct):
         config['H'].B36 = B36[7]
 #        config['H'].shortID = 'w7x_ref_46'
 
-        config['I'].configname = 'configI - Limiter Case'
+        config['I'].configname = 'configI - Limiter Case'   # 
         config['I'].currents = _np.array([14150, 14550, 13490, 12170, 11770,
                                           -3970, 7940], dtype=_np.float64)
         config['I'].avgB0 = avgB0
@@ -688,6 +688,8 @@ class w7xfield(Struct):
             avgB0 = config.avgB0
 
             rats = _np.int64(1e3 * _np.round(currents / currents[0], decimals=3))
+            
+            
 #            res = _np.sum( _np.abs( self.ratios-rats ) )
             res = _np.max(_np.abs(self.ratios - rats))
             if res < 10:
@@ -720,6 +722,19 @@ class w7xfield(Struct):
         # end if
         return self.configname
     # end def
+
+    def configurationA_pickindex(self):
+        coil1 = _np.asarray([13470.0, 13470.0])
+        coilA = 
+        coilB = 
+        ratioB = _np.int64(1e3 * _np.round(coilB / coil1, decimals=3))
+
+        # verify that input currents represent variation 8 of configuration J
+        # ~390 == _np.int64( 1e3*_np.round(coilA/coil1,decimals=3) )
+        self._ratiosForVMECpicking = self.ratios.copy()
+        if _np.isclose(self.ratios[4], 53, atol=1) and _np.isclose(self.ratios[5], 53, atol=1):
+            # EJM configuration:  EIM with an iota correction for error fields
+
 
     def configurationJ_pickindex(self):
         """
