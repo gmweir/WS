@@ -554,7 +554,6 @@ class w7xfield(Struct):
 
         # --------------------------------------------------------- #
 
-    # OLD AND DEPRECATED IN FAVOR OF THE VMEC REST SERVICE METHODS
     def __w7xconfigs__(self):
         # Coil currents per winding
 
@@ -579,7 +578,7 @@ class w7xfield(Struct):
         B36 = _np.array([2.396, 2.415, 2.372, 2.499, 2.260, 2.323, 2.394,
                          2.437, 2.341, 2.407], dtype=_np.float64)
 
-        config['A'].configname = 'configA - standard case'
+        config['A'].configname = 'configA - standard case'   # EIM  (EJM with iota compensation)
         config['A'].currents = _np.array([13470, 13470, 13470, 13470, 13470,
                                           0, 0], dtype=_np.float64)
         config['A'].avgB0 = avgB0
@@ -588,7 +587,7 @@ class w7xfield(Struct):
         config['A'].B36 = B36[0]
 #        config['A'].shortID = 'w7x_ref_1'
 
-        config['B'].configname = 'configB - Low iota'
+        config['B'].configname = 'configB - Low iota'       # DBM
         config['B'].currents = _np.array([12200, 12200, 12200, 12200, 12200,
                                           9150, 9150], dtype=_np.float64)
         config['B'].avgB0 = avgB0
@@ -597,7 +596,7 @@ class w7xfield(Struct):
         config['B'].B36 = B36[1]
 #        config['B'].shortID = 'w7x_ref_18'
 
-        config['C'].configname = 'configC - High iota'
+        config['C'].configname = 'configC - High iota'      # FTM
         config['C'].currents = _np.array([14880, 14880, 14880, 14880, 14880,
                                           -10260, -10260], dtype=_np.float64)
         config['C'].avgB0 = avgB0
@@ -606,7 +605,7 @@ class w7xfield(Struct):
         config['C'].B36 = B36[2]
 #        config['C'].shortID = 'w7x_ref_15'
 
-        config['D'].configname = 'configD - Low Mirror'
+        config['D'].configname = 'configD - Low Mirror'     # AIM
         config['D'].currents = _np.array([12630, 13170, 13170, 14240, 14240,
                                           0, 0], dtype=_np.float64)
         config['D'].avgB0 = avgB0
@@ -615,7 +614,7 @@ class w7xfield(Struct):
         config['D'].B36 = B36[3]
 #        config['D'].shortID = 'w7x_ref_21'
 
-        config['E'].configname = 'configE - High Mirror'
+        config['E'].configname = 'configE - High Mirror'    # KJM
         config['E'].currents = _np.array([14510, 14100, 13430, 12760, 12360,
                                           0, 0], dtype=_np.float64)
         config['E'].avgB0 = avgB0
@@ -624,7 +623,7 @@ class w7xfield(Struct):
         config['E'].B36 = B36[4]
 #        config['E'].shortID = 'w7x_ref_26'
 
-        config['F'].configname = 'configF - Low Shear'
+        config['F'].configname = 'configF - Low Shear'      #  ILD or JLF
         config['F'].currents = _np.array([15320, 15040, 14230, 11520, 11380,
                                           -9760, 10160], dtype=_np.float64)
         config['F'].avgB0 = avgB0
@@ -636,7 +635,7 @@ class w7xfield(Struct):
 #        config['F'].shortID = 'w7x_ref_40' #SE configuration,
         # w7x/0982_0929_0752_0743_-0637_+0663/01/00/
 
-        config['G'].configname = 'configG - Inward shift'
+        config['G'].configname = 'configG - Inward shift'   # FIS
         config['G'].currents = _np.array([13070, 12940, 13210, 14570, 14710,
                                           4090, -8170], dtype=_np.float64)
         config['G'].avgB0 = avgB0
@@ -645,7 +644,7 @@ class w7xfield(Struct):
         config['G'].B36 = B36[6]
 #        config['G'].shortID = 'w7x_ref_43'
 
-        config['H'].configname = 'configH - Outward shift'
+        config['H'].configname = 'configH - Outward shift'    # DKH
         config['H'].currents = _np.array([14030, 14030, 13630, 12950, 12950,
                                           -5670, 5670], dtype=_np.float64)
         config['H'].avgB0 = avgB0
@@ -688,8 +687,7 @@ class w7xfield(Struct):
             B36 = config.B36
             avgB0 = config.avgB0
 
-            rats = _np.int64(1e3 * _np.round(currents / currents[0],
-                                             decimals=3))
+            rats = _np.int64(1e3 * _np.round(currents / currents[0], decimals=3))
 #            res = _np.sum( _np.abs( self.ratios-rats ) )
             res = _np.max(_np.abs(self.ratios - rats))
             if res < 10:
