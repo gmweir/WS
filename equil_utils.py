@@ -16,12 +16,12 @@ from __future__ import absolute_import, division, print_function, \
 import os as _os
 import numpy as _np
 from osa import Client as _cl
-from pyversion import version as _ver
-import getpass as _gp
-
 
 from .. import utils as _ut
 from ..Struct import Struct
+from .. import jsonutils as _jsnut
+
+__metaclass__ = type
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
 
@@ -69,7 +69,7 @@ class VMECrest(Struct):
 
     def loadCoilCurrents(self, experimentID):
         from . import w7x_currents as _curr
-        
+
         self.currents = _curr.get_w7x_currents(experimentID)
         return self.currents
 
@@ -147,51 +147,53 @@ class VMECrest(Struct):
         # endif
         FP = self.vmec.service.getFieldPeriod(vmecid)
         return FP
-        
+
     def get_new_id(self):
-    
+        import getpass as _gp
+
         # get all identifiers so far
         vmec_ids = self.vmec.service.listIdentifiers().VmecIds
-        
+
         # get current username
         user_id = _gp.getuser()
-        
+
         # get all runs associated with the current user
         matching = [s for s in vmec_ids if user_id in s]
-        
+
         # get number of runs which are associated with the current user
         num_runs = _np.size(matching)
-        
+
         # generate new id: username + "_" + (number+1)
         new_id = user_id + "_" + _np.str(num_runs+1)
-        
+
         # debug output
         if (self.verbose):
             print("issuing vmec id " + new_id)
-            
+
         return new_id
-        
+
     def get_new_Mgrid_id(self, comment=''):
-    
+        import getpass as _gp
+
         # get all identifiers so far
         mgrid_ids = self.vmec.service.listIdentifiers().MgridIds
-        
+
         # get current username
         user_id = _gp.getuser()
-        
+
         # get all runs associated with the current user
         matching = [s for s in mgrid_ids if user_id in s]
-        
+
         # get number of runs which are associated with the current user
         num_runs = _np.size(matching)
-        
+
         # generate new id: username + "_" + (number+1)
         new_id = user_id + "_" + comment + '_' + _np.str(num_runs+1)
-        
+
         # debug output
         if (self.verbose):
             print("issuing Mgrid id " + new_id)
-            
+
         return new_id
 
     # ----------------------------------------- #
@@ -410,10 +412,10 @@ class VMECrest(Struct):
         return self.Vol_lcfs, self.dVdrho
 
     # ------------------------------------------------- #
-    
+
     def createMgrid(self, id, magconf, minR, maxR, minZ, maxZ, resR, resZ, resPhi,
                     fieldPeriods=5, isStellaratorSymmetric=True):
-        
+
         return_id = self.vmec.service.createMgrid(magconf, minR, maxR, resR, minZ, maxZ, resZ, resPhi,
                                       isStellaratorSymmetric, fieldPeriods, id)
         if return_id == id:
@@ -421,8 +423,8 @@ class VMECrest(Struct):
         else:
             print("returned ID from Mgrid does not match given: "+return_id)
             return return_id
-        
-        
+
+
 
 #    def plotSurfaces(self):
 #
@@ -433,22 +435,27 @@ class VMECrest(Struct):
 # ----------------------------------------------------------------- #
 # ----------------------------------------------------------------- #
 
-def url_exists(request):
-    resp = None
-    try: 
-        resp = _ver.urllib.urlopen(request)  # @UndefinedVariable
-    except: 
-#        raise
-        raise #Exception()
-    finally:
-        if resp is not None:
-            resp.close()
-            urlexists = True
-        else:
-            urlexists = False
-        #endif
-    #end try
-    return urlexists 
+
+class w7xCurrentEncoder(_jsnut.read):
+    baseurl = "http://svvmec1.ipp-hgw.mpg.de:5000/encode_config?"
+    def __init__(self, currents=None):
+        if currents is not None:
+            self.build_url()
+            self.parseConfig()
+        # endif
+    # end def __init__
+
+    def build_url(self):
+        self.url = self.baseurl
+        self.url += "i1=%.1f&i2=%.1f&i3=%.1f&i4=%.1f&i5=%.1f&ia=%.1f&ib=%.1f"\
+            %(self.currents[0],self.currents[1],self.currents[2],self.currents[3],
+              self.currents[4],self.currents[5],self.currents[6])
+
+    def parseConfig(self):
+
+        # returns a json string containing a dictionary
+        sig = self.connect(self.url)
+
 
 class w7xfield(Struct):
 
@@ -497,7 +504,7 @@ class w7xfield(Struct):
         folderurl05 = vmecname+'/05/0000/'
         try:
             url01 = baseurl+folderurl01+kVMECfile01
-            existsUrl01 = url_exists(url01)
+            existsUrl01 = _jsnut.url_exists(url01)
 #            with _ver.urllib.urlopen(url01) as f:  # @UnusedVariable
 #                existsUrl01 = True
         except IOError:
@@ -506,7 +513,7 @@ class w7xfield(Struct):
 
         try:
             url05 = baseurl+folderurl05+kVMECfile05
-            existsUrl05 = url_exists(url05)
+            existsUrl05 = _jsnut.url_exists(url05)
 #            with _ver.urllib.urlopen(url05) as f:  # @UnusedVariable
 #                existsUrl05 = True
         except IOError:
@@ -567,65 +574,59 @@ class w7xfield(Struct):
         avgB0 = _np.array([2.50], dtype=_np.float64)
 
         # On-axis magnetic field at phi=0
-        B00 = _np.array([2.613, 2.596, 2.636, 2.499, 2.763, 2.711, 2.619,
-                         2.592, 2.666, 2.603], dtype=_np.float64)
+        B00 = _np.array([2.613, 2.596, 2.636, 2.499, 2.763,
+                         2.711, 2.619, 2.592, 2.666, 2.603], dtype=_np.float64)
 
         # On-axis magnetic field at phi=25 degrees
-        B25 = _np.array([2.428, 2.437, 2.417, 2.499, 2.339, 2.379, 2.422,
-                         2.453, 2.397, 2.433], dtype=_np.float64)
+        B25 = _np.array([2.428, 2.437, 2.417, 2.499, 2.339,
+                         2.379, 2.422, 2.453, 2.397, 2.433], dtype=_np.float64)
 
         # On-axis magnetic field at phi=36 degrees
-        B36 = _np.array([2.396, 2.415, 2.372, 2.499, 2.260, 2.323, 2.394,
-                         2.437, 2.341, 2.407], dtype=_np.float64)
+        B36 = _np.array([2.396, 2.415, 2.372, 2.499, 2.260,
+                         2.323, 2.394, 2.437, 2.341, 2.407], dtype=_np.float64)
 
-        config['A'].configname = 'configA - standard case'   # EIM  (EJM with iota compensation)
-        config['A'].currents = _np.array([13470, 13470, 13470, 13470, 13470,
-                                          0, 0], dtype=_np.float64)
+        config['A'].configname = 'configA - standard case - EIM EJM'   # EIM  (EJM with iota compensation)
+        config['A'].currents = _np.array([13470, 13470, 13470, 13470, 13470, 0, 0], dtype=_np.float64)
         config['A'].avgB0 = avgB0
         config['A'].B00 = B00[0]
         config['A'].B25 = B25[0]
         config['A'].B36 = B36[0]
 #        config['A'].shortID = 'w7x_ref_1'
 
-        config['B'].configname = 'configB - Low iota'       # DBM
-        config['B'].currents = _np.array([12200, 12200, 12200, 12200, 12200,
-                                          9150, 9150], dtype=_np.float64)
+        config['B'].configname = 'configB - Low iota - DBM'       # DBM
+        config['B'].currents = _np.array([12200, 12200, 12200, 12200, 12200, 9150, 9150], dtype=_np.float64)
         config['B'].avgB0 = avgB0
         config['B'].B00 = B00[1]
         config['B'].B25 = B25[1]
         config['B'].B36 = B36[1]
 #        config['B'].shortID = 'w7x_ref_18'
 
-        config['C'].configname = 'configC - High iota'      # FTM
-        config['C'].currents = _np.array([14880, 14880, 14880, 14880, 14880,
-                                          -10260, -10260], dtype=_np.float64)
+        config['C'].configname = 'configC - High iota - FTM'      # FTM
+        config['C'].currents = _np.array([14880, 14880, 14880, 14880, 14880, -10260, -10260], dtype=_np.float64)
         config['C'].avgB0 = avgB0
         config['C'].B00 = B00[2]
         config['C'].B25 = B25[2]
         config['C'].B36 = B36[2]
 #        config['C'].shortID = 'w7x_ref_15'
 
-        config['D'].configname = 'configD - Low Mirror'     # AIM
-        config['D'].currents = _np.array([12630, 13170, 13170, 14240, 14240,
-                                          0, 0], dtype=_np.float64)
+        config['D'].configname = 'configD - Low Mirror - AIM'     # AIM
+        config['D'].currents = _np.array([12630, 13170, 13170, 14240, 14240, 0, 0], dtype=_np.float64)
         config['D'].avgB0 = avgB0
         config['D'].B00 = B00[3]
         config['D'].B25 = B25[3]
         config['D'].B36 = B36[3]
 #        config['D'].shortID = 'w7x_ref_21'
 
-        config['E'].configname = 'configE - High Mirror'    # KJM
-        config['E'].currents = _np.array([14510, 14100, 13430, 12760, 12360,
-                                          0, 0], dtype=_np.float64)
+        config['E'].configname = 'configE - High Mirror - KJM KKM'    # KJM
+        config['E'].currents = _np.array([14510, 14100, 13430, 12760, 12360, 0, 0], dtype=_np.float64)
         config['E'].avgB0 = avgB0
         config['E'].B00 = B00[4]
         config['E'].B25 = B25[4]
         config['E'].B36 = B36[4]
 #        config['E'].shortID = 'w7x_ref_26'
 
-        config['F'].configname = 'configF - Low Shear'      #  ILD or JLF
-        config['F'].currents = _np.array([15320, 15040, 14230, 11520, 11380,
-                                          -9760, 10160], dtype=_np.float64)
+        config['F'].configname = 'configF - Low Shear - ILD JLF'      #  ILD or JLF
+        config['F'].currents = _np.array([15320, 15040, 14230, 11520, 11380, -9760, 10160], dtype=_np.float64)
         config['F'].avgB0 = avgB0
         config['F'].B00 = B00[5]
         config['F'].B25 = B25[5]
@@ -635,36 +636,32 @@ class w7xfield(Struct):
 #        config['F'].shortID = 'w7x_ref_40' #SE configuration,
         # w7x/0982_0929_0752_0743_-0637_+0663/01/00/
 
-        config['G'].configname = 'configG - Inward shift'   # FIS
-        config['G'].currents = _np.array([13070, 12940, 13210, 14570, 14710,
-                                          4090, -8170], dtype=_np.float64)
+        config['G'].configname = 'configG - Inward shift - FIS'   # FIS
+        config['G'].currents = _np.array([13070, 12940, 13210, 14570, 14710, 4090, -8170], dtype=_np.float64)
         config['G'].avgB0 = avgB0
         config['G'].B00 = B00[6]
         config['G'].B25 = B25[6]
         config['G'].B36 = B36[6]
 #        config['G'].shortID = 'w7x_ref_43'
 
-        config['H'].configname = 'configH - Outward shift'    # DKH
-        config['H'].currents = _np.array([14030, 14030, 13630, 12950, 12950,
-                                          -5670, 5670], dtype=_np.float64)
+        config['H'].configname = 'configH - Outward shift - DKH'    # DKH
+        config['H'].currents = _np.array([14030, 14030, 13630, 12950, 12950, -5670, 5670], dtype=_np.float64)
         config['H'].avgB0 = avgB0
         config['H'].B00 = B00[7]
         config['H'].B25 = B25[7]
         config['H'].B36 = B36[7]
 #        config['H'].shortID = 'w7x_ref_46'
 
-        config['I'].configname = 'configI - Limiter Case'   # 
-        config['I'].currents = _np.array([14150, 14550, 13490, 12170, 11770,
-                                          -3970, 7940], dtype=_np.float64)
+        config['I'].configname = 'configI - Limiter Case - OP1.1'   #
+        config['I'].currents = _np.array([14150, 14550, 13490, 12170, 11770, -3970, 7940], dtype=_np.float64)
         config['I'].avgB0 = avgB0
         config['I'].B00 = B00[8]
         config['I'].B25 = B25[8]
         config['I'].B36 = B36[8]
 #        config['I'].shortID = ''
 
-        config['J'].configname = 'configJ - Limiter Case for OP1.1'
-        config['J'].currents = _np.array([12780, 12780, 12780, 12780, 12780,
-                                          4980, 4980], dtype=_np.float64)
+        config['J'].configname = 'configJ - Limiter Case - OP1.1'
+        config['J'].currents = _np.array([12780, 12780, 12780, 12780, 12780, 4980, 4980], dtype=_np.float64)
         config['J'].avgB0 = avgB0
         config['J'].B00 = B00[9]
         config['J'].B25 = B25[9]
@@ -688,8 +685,6 @@ class w7xfield(Struct):
             avgB0 = config.avgB0
 
             rats = _np.int64(1e3 * _np.round(currents / currents[0], decimals=3))
-            
-            
 #            res = _np.sum( _np.abs( self.ratios-rats ) )
             res = _np.max(_np.abs(self.ratios - rats))
             if res < 10:
@@ -724,16 +719,36 @@ class w7xfield(Struct):
     # end def
 
     def configurationA_pickindex(self):
-        coil1 = _np.asarray([13470.0, 13470.0])
-        coilA = 
-        coilB = 
+        coil1 = _np.asarray([13470.0, 13067.0])
+        B00 = [2.613, 2.63]
+#        coilA = [0, 53]
+        coilB =  [0, -699.0]
         ratioB = _np.int64(1e3 * _np.round(coilB / coil1, decimals=3))
 
         # verify that input currents represent variation 8 of configuration J
-        # ~390 == _np.int64( 1e3*_np.round(coilA/coil1,decimals=3) )
         self._ratiosForVMECpicking = self.ratios.copy()
-        if _np.isclose(self.ratios[4], 53, atol=1) and _np.isclose(self.ratios[5], 53, atol=1):
+        if _np.isclose(self.ratios[5], ratioB[0], atol=1):
             # EJM configuration:  EIM with an iota correction for error fields
+            self._ratiosForVMECpicking[5:] = 0.0
+            self.index = 1
+        elif _np.isclose(self.ratios[5], ratioB[1], atol=1):
+            # EJM configuration:  EIM with an iota correction for error fields
+            self._ratiosForVMECpicking[5:] = 0.0
+            self.index = 2
+
+        # check if currents are around 1000 and convert to that if close
+        # This should not be a long-term solution!
+        if _np.all(_np.isclose(self.ratios[:5], 1000, atol=1)):
+            self._ratiosForVMECpicking[:5] = 1000
+
+        if self.index > 0:
+            self.configname = 'configA - Standard Case for OP1.2 - EIM / EJM'%(self.index,)
+        # endif
+
+        self.Bfactor = self.currents[0]/coil1[self.index-1]
+
+        # On-axis magnetic field at phi=0.0
+        self.B00 = B00[self.index-1]*self.Bfactor
 
 
     def configurationJ_pickindex(self):
@@ -777,9 +792,7 @@ class w7xfield(Struct):
         if self.ratios[6] in ratioB:
             self.index = 1+_np.where(self.ratios[6] == ratioB)[0][0]
         elif _np.any(_np.isclose(self.ratios[6], ratioB, atol=1)):
-            self.index = \
-                1+_np.where(_np.isclose(self.ratios[6],
-                                        ratioB, atol=1) == True)[0][0]
+            self.index = 1+_np.where(_np.isclose(self.ratios[6], ratioB, atol=1) == True)[0][0]
             self._ratiosForVMECpicking[6] = ratioB[self.index-1]
         else:
             print('Input currents do not match Configuration J!')
@@ -791,9 +804,7 @@ class w7xfield(Struct):
             self._ratiosForVMECpicking[:5] = 1000
 
         if self.index > 0:
-            self.configname = \
-                'configJ - Limiter Case for OP1.1 - Variant 8, index %i' \
-                % (self.index,)
+            self.configname = 'configJ - Limiter Case for OP1.1 - Variant 8, index %i'%(self.index,)
         # endif
 
         self.Bfactor = self.currents[0]/coil1[self.index-1]
