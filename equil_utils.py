@@ -17,9 +17,15 @@ import os as _os
 import numpy as _np
 from osa import Client as _cl
 
+# normal use
 from .. import utils as _ut
 from ..Struct import Struct
-from .. import jsonutils as _jsnut
+from ..W7X import jsonutils as _jsnut
+
+# local testing
+#from pybaseutils import utils as _ut
+#from pybaseutils.Struct import Struct
+#from pybaseutils.W7X import jsonutils as _jsnut
 
 __metaclass__ = type
 # ----------------------------------------------------------------- #
@@ -27,9 +33,9 @@ __metaclass__ = type
 
 
 class VMECrest(Struct):
-
     # Import the VMEC rest client
-    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v6?wsdl")
+#    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v6?wsdl")
+    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v8?wsdl")
     rooturl = 'http://10.66.24.160/'
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
@@ -436,14 +442,25 @@ class VMECrest(Struct):
 # ----------------------------------------------------------------- #
 
 
-class w7xCurrentEncoder(_jsnut.read):
+class w7xCurrentEncoder(_jsnut.jsnpy):
     baseurl = "http://svvmec1.ipp-hgw.mpg.de:5000/encode_config?"
     def __init__(self, currents=None):
         if currents is not None:
+            self.currents = currents
             self.build_url()
             self.parseConfig()
         # endif
     # end def __init__
+
+    @property
+    def currents(self):
+        return self._I
+    @currents.setter
+    def currents(self, value):
+        self._I = _np.asarray(value)
+    @currents.deleter
+    def currents(self):
+        del self._I
 
     def build_url(self):
         self.url = self.baseurl
@@ -452,20 +469,32 @@ class w7xCurrentEncoder(_jsnut.read):
               self.currents[4],self.currents[5],self.currents[6])
 
     def parseConfig(self):
-
         # returns a json string containing a dictionary
-        sig = self.connect(self.url)
+        self.response = self.openURL(self.url)
+        self.code = self.response['3-letter-code']
+        self.name = self.code[:3]
+        self.field = self.code[3:]
+        self.B00 = self.response['Bax(phi=0)/T']
+        self.Bax_00 = self.response['Bax/T= 0.0000']
+        self.central_iota = self.response['central iota']
+        self.info = self.response['info']
+        self.mirror_ratio = self.response['mirror ratio']
+        self.avgB0 = self.response['techn. av. Bax/T']
+        self.vmecid = self.response['vmec-id-string']
+
+    def __str__(self):
+        return _jsnut._jsn.dumps(self.response)
 
 
 class w7xfield(Struct):
-
     nwindings = [108, 108, 108, 108, 108, 36, 36]
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
-    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v5?wsdl")
+    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v8?wsdl")
 
     def __init__(self, currents=None, verbose=True):
         self.verbose = verbose
         if currents is not None:
+            currents = _np.asarray(currents, dtype=_np.float64)
             self.currents = currents
             self.localdir = ''
             self.ratios = \
@@ -474,11 +503,11 @@ class w7xfield(Struct):
             self.pickW7Xconfig()
 
             # vmecname = self.getVMECname()
-            [self.RefRuns, self.shortIDs] = self.getVMECrun()
+            [self.RefRuns, self.shortIDs] = self.getVMECrun(self.ratios)
         # endif
     # enddef __init__
 
-        ####################
+        # =============== #
 
     def getVMECname(self, ratios=None):
         if ratios is None:
@@ -487,7 +516,19 @@ class w7xfield(Struct):
         vmecname = '%4i_%4i_%4i_%4i_%0+5i_%0+5i' % tuple(ratios[1:])
         return vmecname
 
-#    def getSHORTid(self):
+
+    # =============== #
+
+    def pickW7Xconfig(self):
+        config = w7xCurrentEncoder(self.currents)
+        self.B00 = _np.float64(config.B00)
+        self.avgB0 = config.avgB0
+        self.Bfactor = self.currents[0]/self.currents[0]
+        self.configname = config.name
+        self.Bfactor = 1e-2*_np.abs(_np.float64(config.field))
+        self.vmecid = config.vmecid
+
+    # =============== #
 
     def pickVMECfile(self, ratios=None):
         if ratios is None:
@@ -545,7 +586,7 @@ class w7xfield(Struct):
         # endif
     # enddef pickVMECrestid
 
-    def getVMECrun(self, ratios=None):
+    def getVMECrun(self, ratios=None, compensate=True):
         if ratios is None:
             ratios = self._ratiosForVMECpicking  # endif
         vmecname = self.getVMECname(ratios)
@@ -559,9 +600,9 @@ class w7xfield(Struct):
         return RefRuns, shortIDs
     # enddef getVMECrun
 
-        # --------------------------------------------------------- #
+    # =============== #
 
-    def __w7xconfigs__(self):
+    def __OP11configs__(self):
         # Coil currents per winding
 
         config = {'A': Struct(), 'B': Struct(),
@@ -670,10 +711,12 @@ class w7xfield(Struct):
 
         return config
 
-        ####################
-    def pickW7Xconfig(self):
+
+    # =============== #
+
+    def pickOP11config(self):
         # Get the table of configurations
-        configs = self.__w7xconfigs__()
+        configs = self.__OP11configs__()
 
         foundit = False
         for key, config in configs.items():  # @UnusedVariable
@@ -841,6 +884,9 @@ if __name__ == '__main__':
     print(vmc.Vol_grid[-1])  # test volume normalization
     print(_np.trapz(vmc.dVdrho_grid, x=vmc_roa))  # test jacobian of integral
     print(vmc.Vol_lcfs)  # print estimate from webservices
+
+    cnfg = w7xCurrentEncoder(currents)
+    print(cnfg)
 
     import matplotlib.pyplot as _plt
     _hfig = _plt.figure()
