@@ -34,10 +34,12 @@ if CheckWebServicesConnection():  # returns a boolean True if the pinger receive
                       # and CheckENCODERConnection():
         from . import equil_utils
         from . import magfield
+        from . import VMEC
 #        from . import w7x_currents  # analysis:ignore
         from .equil_utils import VMECrest  # analysis:ignore
         from .equil_utils import w7xfield  # analysis:ignore
         from .equil_utils import w7xCurrentEncoder  # analysis:ignore
+
     # endif
 else:  # no packet received from Webservices
     print('could not ping the W7-X webservices (probably off-campus)')

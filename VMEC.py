@@ -32,13 +32,13 @@ def create_local_configs(vmec_local='C:\PortablePrograms\configs\\'):
     label[3]  = 'EIM200'
     stream[3] = '1000_1000_1000_1000_+0000_+0000/01/12m/boozer.txt'
     label[4]  = 'KJM000'
-    stream[4] = '0972_0926_0880_0852_+0000_+0000/01/00jh/boozer.txt'
-    label[3]  = 'KJM065'
-    stream[3] = '1020_1080_0930_0843_+0000_+0000/01/00/boozer.txt'
-    label[4]  = 'FTM000'
-    stream[4] = '1000_1000_1000_1000_-0690_-0690/01/00/boozer.txt'
-    label[5]  = 'EEM000'
-    stream[5] = '1000_1000_1000_1000_+0390_+0390/05/0000/boozer.txt'
+    stream[4] = '1020_1080_0930_0843_+0000_+0000/01/00/boozer.txt'
+    label[5]  = 'KJM065'
+    stream[5] = '0972_0926_0880_0852_+0000_+0000/01/00jh/boozer.txt'
+    label[6]  = 'FTM000'
+    stream[6] = '1000_1000_1000_1000_-0690_-0690/01/00/boozer.txt'
+    label[7]  = 'EEM000'
+    stream[7] = '1000_1000_1000_1000_+0390_+0390/05/0000/boozer.txt'
 
     for i in range(len(label.items())):
         urllib.urlretrieve(url+stream[i],vmec_local+label[i]+'_boozer.bc')
@@ -60,20 +60,33 @@ def get_config_url(label,full_path=0):
             EEM000
 
                     '''
-    co={'DBM000': '/w7x/1000_1000_1000_1000_+0750_+0750/01/00/',
-        'EIM000': '/w7x/1000_1000_1000_1000_+0000_+0000/01/00/',
-        'EIM065': '/w7x/1000_1000_1000_1000_+0000_+0000/01/04m/',
-        'EIM200': '/w7x/1000_1000_1000_1000_+0000_+0000/01/12m/',
-        'KJM000': '/w7x/0972_0926_0880_0852_+0000_+0000/01/00jh/',
-        'KJM065': '/w7x/1020_1080_0930_0843_+0000_+0000/01/00/',
-        'FTM000': '/w7x/1000_1000_1000_1000_-0690_-0690/01/00/',
-        'EEM000': '/w7x/1000_1000_1000_1000_+0390_+0390/05/0000/',
+    co={'DBM000': '/w7x/1000_1000_1000_1000_+0750_+0750/01/00',
+        'EIM000': '/w7x/1000_1000_1000_1000_+0000_+0000/01/00',
+        'EIM065': '/w7x/1000_1000_1000_1000_+0000_+0000/01/04m',
+        'EIM200': '/w7x/1000_1000_1000_1000_+0000_+0000/01/12m',
+        'KJM000': '/w7x/1020_1080_0930_0843_+0000_+0000/01/00',
+        'KJM065': '/w7x/0972_0926_0880_0852_+0000_+0000/01/00jh',
+        'FTM000': '/w7x/1000_1000_1000_1000_-0690_-0690/01/00',
+        'EEM000': '/w7x/1000_1000_1000_1000_+0390_+0390/05/0000',
        }
 
     if full_path:
-        return 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/w7x/' + co[label]
+        return 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger' + co[label]
     else:
         return co[label]
+
+def get_config_sid(Bconf):
+    co={'DBM000': 'w7x_ref_18',
+        'EIM000': 'w7x_ref_1',
+        'EIM065': 'w7x_ref_7',
+        'EIM200': 'w7x_ref_9',
+        'KJM000': 'w7x_ref_163',
+        'KJM065': 'w7x_ref_27',
+        'FTM000': 'w7x_ref_15',
+        'EEM000': 'w7x_ref_82',
+       }
+    return co[Bconf]
+
 
 def get_reff(x,y,z,Vid):
     ''' reff = get_reff(x,y,z,VMEC_ID)'''
@@ -104,7 +117,7 @@ def get_minor_radius(Vid):
     return tmp[len(tmp)-1]
 
 
-def fluxsurfaces(s,phi,Vid,N=256,disp=0):
+def fluxsurfaces(s,phi,Vid,N=256,disp=0,_ax=plt):
     ''' fluxsurfaces(s,phi,Vid,N=256,disp=0) '''
 
     if isinstance(s,int):
@@ -126,10 +139,11 @@ def fluxsurfaces(s,phi,Vid,N=256,disp=0):
         else:
             R1=w[i].x1
             z1=w[i].x3
-        if disp: plt.plot(R1,z1,'b')
+        if disp:
+            _ax.plot(R1,z1,'k-')
         R[i]=R1
         z[i]=z1
-    if disp: plt.axis('equal')
+    if disp: _ax.axis('equal')
 
     return R, z
 
