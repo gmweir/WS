@@ -20,7 +20,7 @@ from osa import Client as _cl
 # normal use
 from .. import utils as _ut
 from ..Struct import Struct
-from ..W7X import jsonutils as _jsnut
+from W7X import jsonutils as _jsnut
 
 # local testing
 #from pybaseutils import utils as _ut

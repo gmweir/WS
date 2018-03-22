@@ -8,7 +8,6 @@ Created on Thu Nov 30 11:22:01 2017
 from osa import Client
 import numpy as np
 from pyversion.version import urllib
-#import urllib2, urllib
 import matplotlib.pyplot as plt
 import os as _os
 
