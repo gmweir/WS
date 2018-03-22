@@ -17,7 +17,7 @@ from __future__ import absolute_import, with_statement, absolute_import, \
 __version__ = "2017.05.24.15"
 __all__ = ['equil_utils','magfield']
 
-from ..ssh import CheckWebServicesConnection #, CheckVMECConnection, \
+from pybaseutils.ssh import CheckWebServicesConnection #, CheckVMECConnection, \
 #                  CheckRESTConnection, CheckENCODERConnection
 
 if CheckWebServicesConnection():  # returns a boolean True if the pinger receives a packet back

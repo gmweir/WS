@@ -17,17 +17,9 @@ import os as _os
 import numpy as _np
 from osa import Client as _cl
 
-try:
-    # normal use
-    from .. import utils as _ut
-    from ..Struct import Struct
-    from W7X import jsonutils as _jsnut
-except:
-    # local testing
-    from pybaseutils import utils as _ut
-    from pybaseutils.Struct import Struct
-    from pybaseutils.W7X import jsonutils as _jsnut
-# end try
+from pybaseutils import utils as _ut
+from pybaseutils.Struct import Struct
+from W7X import jsonutils as _jsnut
 
 __metaclass__ = type
 # ----------------------------------------------------------------- #
