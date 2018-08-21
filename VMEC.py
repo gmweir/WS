@@ -116,7 +116,7 @@ def get_minor_radius(Vid):
     return tmp[len(tmp)-1]
 
 
-def fluxsurfaces(s,phi,Vid,N=256,disp=0,_ax=plt):
+def fluxsurfaces(s,phi,Vid,N=256,disp=1,_ax=plt):
     ''' fluxsurfaces(s,phi,Vid,N=256,disp=0) '''
 
     if isinstance(s,int):
