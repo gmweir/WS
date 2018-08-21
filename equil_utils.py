@@ -4,14 +4,14 @@ Created on Mon Jul 25 17:02:07 2016
 
 @author: gawe
 """
-# ----------------------------------------------------------------- #
-# ----------------------------------------------------------------- #
+# ================================================================= #
+# ================================================================= #
 
 # This section is to improve compatability between bython 2.7 and python 3x
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-# ----------------------------------------------------------------- #
+# ================================================================= #
 
 import os as _os
 import numpy as _np
@@ -22,8 +22,8 @@ from pybaseutils.Struct import Struct
 from W7X import jsonutils as _jsnut
 
 __metaclass__ = type
-# ----------------------------------------------------------------- #
-# ----------------------------------------------------------------- #
+# ================================================================= #
+# ================================================================= #
 
 
 class VMECrest(Struct):
@@ -34,7 +34,7 @@ class VMECrest(Struct):
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
 
-    def __init__(self, shortID=None, coords=None, verbose=True):
+    def __init__(self, shortID=None, coords=None, verbose=True, currents=None):
         self.verbose = verbose
         self.shortID = shortID
         self.coords = coords
@@ -48,7 +48,11 @@ class VMECrest(Struct):
         self.Vol_lcfs = None
         if shortID is not None:
             self.vmecid = shortID
-            self.currents = self.getCoilCurrents()
+            if currents is None:
+                self.currents = self.getCoilCurrents()
+            else:
+                self.currents = _np.asarray(currents, dtype=_np.float64)
+            # end if
             self.getVMECgridDat()
         # endif
         if coords is not None:
@@ -57,8 +61,8 @@ class VMECrest(Struct):
         # endif
     # enddef __init__
 
-    # ----------------------------------------- #
-    # ----------------------------------------- #
+    # ========================================= #
+    # ========================================= #
 
     def getCoilCurrents(self, vmecid=None):
         if vmecid is None:
@@ -196,8 +200,8 @@ class VMECrest(Struct):
 
         return new_id
 
-    # ----------------------------------------- #
-    # ----------------------------------------- #
+    # ========================================= #
+    # ========================================= #
 
     def setCoords(self, coords):
         """
@@ -244,7 +248,7 @@ class VMECrest(Struct):
         self.getVol()        # get Volume, dVdrho, Vol_lcfs on grid/coords
         return 1
 
-    # ----------------------------------------- #
+    # ========================================= #
 
     def getBcart(self):
         # Magnetic field utility needs cartesian coordinates
@@ -268,7 +272,7 @@ class VMECrest(Struct):
                                  _np.ones((1, 3), dtype=_np.float64))
         return self.bhat
 
-    # ----------------------------------------- #
+    # ========================================= #
 
     def getVMECcoord(self, tol=3e-3):
         # Get the VMEC coordinates at each point: s,th,zi
@@ -288,7 +292,7 @@ class VMECrest(Struct):
         # endif
         return self.roa
 
-    # ----------------------------------------- #
+    # ========================================= #
 
     def getVMECgridDat(self):
         self.getVMECgrid()
@@ -299,7 +303,7 @@ class VMECrest(Struct):
         self.getgridVol_lcfs()
     # end def
 
-    # ----------------------------------------- #
+    # ========================================= #
 
     def getVMECgrid(self):
         # Get the toroidal flux on the VMEC grid
@@ -411,7 +415,7 @@ class VMECrest(Struct):
             self.getgridVol_lcfs()  # endif
         return self.Vol_lcfs, self.dVdrho
 
-    # ------------------------------------------------- #
+    # ========================================= #
 
     def createMgrid(self, id, magconf, minR, maxR, minZ, maxZ, resR, resZ, resPhi,
                     fieldPeriods=5, isStellaratorSymmetric=True):
@@ -432,8 +436,8 @@ class VMECrest(Struct):
 
 # end class VMECrest
 
-# ----------------------------------------------------------------- #
-# ----------------------------------------------------------------- #
+# ================================================================= #
+# ================================================================= #
 
 
 class w7xCurrentEncoder(_jsnut.jsnpy):
@@ -494,6 +498,7 @@ class w7xfield(Struct):
             self.ratios = \
                 _np.int64(1e3*_np.round(currents/currents[0],
                                         decimals=3))
+            self._ratiosForVMECpicking = self.ratios.copy()
             self.pickW7Xconfig()
 
             # vmecname = self.getVMECname()
@@ -854,8 +859,8 @@ class w7xfield(Struct):
         return self.configname
 # end class w7xconfigs
 
-# ------------------------------------------------------------------------- #
-# ------------------------------------------------------------------------- #
+# ================================================================= #
+# ================================================================= #
 
 if __name__ == '__main__':
     currents = _np.array([12361.89994498,
