@@ -526,7 +526,7 @@ class w7xfield(Struct):
         self.B00 = _np.float64(config.B00)
         self.avgB0 = _np.float64(config.avgB0)
 #        self.Bfactor = self.currents[0]/self.currents[0]
-        self.Bfactor = self.currents[0]/config.currents[0]
+        self.Bfactor = self.currents[0]/config.currents[0] #self.currents[0]
         self.configname = config.name
 #        self.Bfactor = 1e-2*_np.abs(_np.float64(config.field))
         self.vmecid = config.vmecid
