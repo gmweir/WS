@@ -76,10 +76,12 @@ def get_config_url(label,full_path=0):
 
 def get_config_sid(Bconf):
     co={'DBM000': 'w7x_ref_18',
+        'EJM000': 'w7x_ref_1',
         'EIM000': 'w7x_ref_1',
         'EIM065': 'w7x_ref_7',
         'EIM200': 'w7x_ref_9',
         'KJM000': 'w7x_ref_163',
+        'KKM000': 'w7x_ref_163',
         'KJM065': 'w7x_ref_27',
         'FTM000': 'w7x_ref_15',
         'EEM000': 'w7x_ref_82',
