@@ -462,7 +462,7 @@ class w7xCurrentEncoder(_jsnut.jsnpy):
 
     def build_url(self):
         self.url = self.baseurl
-        self.url += "i1=%.1f&i2=%.1f&i3=%.1f&i4=%.1f&i5=%.1f&ia=%.1f&ib=%.1f"\
+        self.url += "i1=%.1f&i2=%.1f&i3=%.1f&i4=%.1f&i5=%.1f&ia=%.1f&ib=%.1f&b0_req=2.5"\
             %(self.currents[0],self.currents[1],self.currents[2],self.currents[3],
               self.currents[4],self.currents[5],self.currents[6])
 
@@ -473,7 +473,9 @@ class w7xCurrentEncoder(_jsnut.jsnpy):
         self.name = self.code[:3]
         self.field = self.code[3:]
         self.B00 = self.response['Bax(phi=0)/T']
-        self.Bax_00 = self.response['Bax/T= 0.0000']
+#        self.Bax_00 = self.response['Bax/T= 0.0000']
+        self.currents =  _np.asarray([_np.float64(ic) for ic in _np.atleast_1d(self.response['Bax/T= 2.5000'])[0].split(' ') if len(ic)>0],
+                                      dtype=_np.float64) # self.response['Bax/T= 2.5000']
         self.central_iota = self.response['central iota']
         self.info = self.response['info']
         self.mirror_ratio = self.response['mirror ratio']
@@ -520,11 +522,13 @@ class w7xfield(Struct):
 
     def pickW7Xconfig(self):
         config = w7xCurrentEncoder(self.currents)
+        self.config = config
         self.B00 = _np.float64(config.B00)
-        self.avgB0 = config.avgB0
-        self.Bfactor = self.currents[0]/self.currents[0]
+        self.avgB0 = _np.float64(config.avgB0)
+#        self.Bfactor = self.currents[0]/self.currents[0]
+        self.Bfactor = self.currents[0]/config.currents[0]
         self.configname = config.name
-        self.Bfactor = 1e-2*_np.abs(_np.float64(config.field))
+#        self.Bfactor = 1e-2*_np.abs(_np.float64(config.field))
         self.vmecid = config.vmecid
 
     # =============== #
