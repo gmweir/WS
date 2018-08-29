@@ -60,9 +60,11 @@ def get_config_url(label,full_path=0):
 
                     '''
     co={'DBM000': '/w7x/1000_1000_1000_1000_+0750_+0750/01/00',
+        'EJM000': '/w7x/1000_1000_1000_1000_+0000_+0000/01/00',
         'EIM000': '/w7x/1000_1000_1000_1000_+0000_+0000/01/00',
         'EIM065': '/w7x/1000_1000_1000_1000_+0000_+0000/01/04m',
         'EIM200': '/w7x/1000_1000_1000_1000_+0000_+0000/01/12m',
+        'KKM000': '/w7x/1020_1080_0930_0843_+0000_+0000/01/00',
         'KJM000': '/w7x/1020_1080_0930_0843_+0000_+0000/01/00',
         'KJM065': '/w7x/0972_0926_0880_0852_+0000_+0000/01/00jh',
         'FTM000': '/w7x/1000_1000_1000_1000_-0690_-0690/01/00',
@@ -118,33 +120,33 @@ def get_minor_radius(Vid):
     return tmp[len(tmp)-1]
 
 
-def fluxsurfaces(s,phi,Vid,N=256,disp=1,_ax=plt):
-    ''' fluxsurfaces(s,phi,Vid,N=256,disp=0) '''
+def fluxsurfaces(s,phi,Vid,N=256,disp=1,_ax=plt, fmt='k-'):
+    '''
+    fluxsurfaces(s,phi,Vid,N=256,disp=0)
+    '''
 
     if isinstance(s,int):
-        n=1
-
+        nn=1
     else:
-        n=len(s)
-        phi=np.ones(n)*phi
+        nn=len(s)
+        phi=np.ones(nn)*phi
+    # end if
     w=VClient.service.getFluxSurfaces(Vid, phi*np.pi/180, s, N)
-    R=np.zeros((n,N))
-    z=np.zeros((n,N))
-
-    for i in range(n):
-
-        if isinstance(w[i].x1, list) and isinstance(w[i].x2, list):
-
-            R1=np.sqrt(np.square(w[i].x1) + np.square(w[i].x2))
-            z1=w[i].x3
+    R=np.zeros((nn,N))
+    z=np.zeros((nn,N))
+    for ii in range(nn):
+        if isinstance(w[ii].x1, list) and isinstance(w[ii].x2, list):
+            R1=np.sqrt(np.square(w[ii].x1) + np.square(w[ii].x2))
+            z1=w[ii].x3
         else:
-            R1=w[i].x1
-            z1=w[i].x3
-        if disp:
-            _ax.plot(R1,z1,'k-')
-        R[i]=R1
-        z[i]=z1
-    if disp: _ax.axis('equal')
+            R1=w[ii].x1
+            z1=w[ii].x3
+        # end if
+        if disp:            _ax.plot(R1,z1,fmt)        # end if
+        R[ii]=R1
+        z[ii]=z1
+    # end for
+    if disp: _ax.axis('equal') # end if
 
     return R, z
 

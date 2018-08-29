@@ -34,7 +34,7 @@ class VMECrest(Struct):
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
 
-    def __init__(self, shortID=None, coords=None, verbose=True, currents=None):
+    def __init__(self, shortID=None, coords=None, verbose=True, realcurrents=None):
         self.verbose = verbose
         self.shortID = shortID
         self.coords = coords
@@ -48,11 +48,12 @@ class VMECrest(Struct):
         self.Vol_lcfs = None
         if shortID is not None:
             self.vmecid = shortID
-            if currents is None:
-                self.currents = self.getCoilCurrents()
-            else:
-                self.currents = _np.asarray(currents, dtype=_np.float64)
+            self.currents = self.getCoilCurrents()
+            if realcurrents is None:
+                realcurrents = _np.copy(self.currents)
             # end if
+            self.realcurrents = _np.asarray(realcurrents, dtype=_np.float64)
+            self.Bfactor = self.realcurrents[0]/self.currents[0]
             self.getVMECgridDat()
         # endif
         if coords is not None:
@@ -74,11 +75,11 @@ class VMECrest(Struct):
     def loadCoilCurrents(self, experimentID):
         from . import w7x_currents as _curr
 
-        self.currents = _curr.get_w7x_currents(experimentID)
-        return self.currents
+        self.realcurrents = _curr.get_w7x_currents(experimentID)
+        self.Bfactor = self.realcurrents[0]/self.currents[0]
+        return self.realcurrents
 
-    def getFluxSurfaces(self, torFi=None, numPoints=100, vmecid=None,
-                        s=None):
+    def getFluxSurfaces(self, torFi=None, numPoints=100, vmecid=None, s=None):
         if vmecid is None:
             vmecid = self.vmecid
         # endif
@@ -92,9 +93,22 @@ class VMECrest(Struct):
             s = self.s
         # endif
 
-        fsFi = self.vmec.service.getFluxSurfaces(vmecid, torFi, s,
-                                                 numPoints)
+        fsFi = self.vmec.service.getFluxSurfaces(vmecid, torFi, s, numPoints)
         return fsFi
+
+    def getMagneticAxis(self, torFi=None, vmecid=None):
+        if vmecid is None:
+            vmecid = self.vmecid
+        # endif
+        if torFi is None:
+            torFi = 0.0
+            if hasattr(self,'coords') and self.coords is not None:
+                torFi = self.fi
+            # endif
+        # endif
+        acoord = self.vmec.service.getMagneticAxis(vmecid, torFi)
+        self.axis_coord = self.Bxyz = _np.array(_np.vstack((acoord.x1, acoord.x2, acoord.x3)), dtype=_np.float64)
+        return self.axis_coord
 
     def getVMECinput(self, vmecid=None):
         if vmecid is None:
@@ -250,17 +264,19 @@ class VMECrest(Struct):
 
     # ========================================= #
 
-    def getBcart(self):
+    def getBcart(self):  # TODO:  do you want to scale field outside of this or inside?
         # Magnetic field utility needs cartesian coordinates
 
         # Call the webservices magnetic field utility
         b = self.vmec.service.magneticField(self.vmecid, self._pcart)
-        self.Bxyz = _np.array(_np.vstack((b.x1, b.x2, b.x3)),
-                              dtype=_np.float64)
+        self.Bxyz = _np.array(_np.vstack((b.x1, b.x2, b.x3)), dtype=_np.float64)
         self.Bxyz = self.Bxyz.transpose()
+        if hasattr(self,'Bfactor'):
+            self.Bxyz *= self.Bfactor
+        # end if
         return self.Bxyz
 
-    def getmodB(self):
+    def getmodB(self): # TODO:  do you want to scale field outside of this or inside?
         # Calculate the magnetic field strength
         self.modB = _np.linalg.norm(self.Bxyz, ord=2, axis=1)
         return self.modB
@@ -268,29 +284,53 @@ class VMECrest(Struct):
     def getbhat(self):
         # Calculate the magnetic field unit vector
         modB = self.modB.copy()
-        self.bhat = self.Bxyz / (modB.reshape(self.nn, 1) *
-                                 _np.ones((1, 3), dtype=_np.float64))
+        self.bhat = self.Bxyz / (modB.reshape(self.nn, 1) * _np.ones((1, 3), dtype=_np.float64))
         return self.bhat
 
     # ========================================= #
 
     def getVMECcoord(self, tol=3e-3):
         # Get the VMEC coordinates at each point: s,th,zi
-        vmec_coords = \
-            self.vmec.service.toVMECCoordinates(self.vmecid,
-                                                self._pcyl, tol)
+        vmec_coords = self.vmec.service.toVMECCoordinates(self.vmecid, self._pcyl, tol)
         self.s = _np.array(vmec_coords.x1, dtype=_np.float64)
         self.th = _np.array(vmec_coords.x2, dtype=_np.float64)
         self.zi = _np.array(vmec_coords.x3, dtype=_np.float64)
         self.roa = _np.sqrt(self.s)
         return self.roa
 
+    def getCARTcoord(self, vmccoords):
+        # Get the cartesian coordinates at each point from VMEC coords: s,th,zi
+        vmccoords = _np.asarray(vmccoords, dtype=_np.float64)
+        vmccoords = _np.atleast_2d(vmccoords)
+        nr, nc = vmccoords.shape
+        if nr == 3:
+            vmccoords = vmccoords.T
+            nr, nc = vmccoords.shape
+        # end if
+
+        # Load up the webservices Points3D cylindrical object
+        _coords = self.vmec.types.Points3D(nr)
+        _coords.x1 = vmccoords[:,0]
+        _coords.x2 = vmccoords[:,1]
+        _coords.x3 = vmccoords[:,2]
+
+        c = self.vmec.service.toCylinderCoordinates(self.vmecid, _coords)
+        coords = _np.array(_np.vstack((c.x1, c.x2, c.x3)), dtype=_np.float64) # cylindrical coordinates
+
+        XX, YY = _ut.pol2cart(coords[:,0],coords[:,1])
+        return XX, YY, coords[:,2]   # Cartesian coordinates
+
     def CalcFluxCart(self, coords=None):
         if coords is not None:
-            self.setCartCoords(coords)
-            self.runCalc()
+            self.setCoords(coords)
+            self.getCoordData()
         # endif
         return self.roa
+
+    def get_reff(self):
+        reff = self.vmec.service.getReff(self.vmecid, self._pcart)
+        self.reff = _np.asarray(reff, dtype=_np.float64)
+        return self.reff
 
     # ========================================= #
 
@@ -307,9 +347,10 @@ class VMECrest(Struct):
 
     def getVMECgrid(self):
         # Get the toroidal flux on the VMEC grid
-        torPsi_grid = \
-            self.vmec.service.getToroidalFluxProfile(self.vmecid)
+        torPsi_grid = self.vmec.service.getToroidalFluxProfile(self.vmecid)
+        reff_grid = self.vmec.service.getReffProfile(self.vmecid)
         self.torPsi_grid = _np.array(torPsi_grid, dtype=_np.float64)
+        self.reff_grid = _np.array(reff_grid, dtype=_np.float64)
         return self.torPsi_grid
 
     def getgridroa(self):
@@ -320,27 +361,26 @@ class VMECrest(Struct):
 
     def getFluxTor(self):
         # Linearly interpolate to the new spatial coordinates
-        self.torPsi = _np.interp(self.roa, self.roa_grid,
-                                 self.torPsi_grid)
+        self.torPsi = _np.interp(self.roa, self.roa_grid, self.torPsi_grid)
         return self.torPsi
 
-    # ---
-
     def getgridpres(self):
-        self.Pres_grid = \
-            self.vmec.service.getPressureProfile(self.vmecid)
+        self.Pres_grid = self.vmec.service.getPressureProfile(self.vmecid)
         self.Pres_grid = _np.array(self.Pres_grid, dtype=_np.float64)
-
         return self.Pres_grid
 
     def getPressure(self):
         if self.Pres_grid is None:
             self.Pres_grid = self.getgridpres()
-        self.Pres = _np.interp(self.roa, self.roa_grid,
-                               self.Pres_grid)
+        # end if
+        self.Pres = _np.interp(self.roa, self.roa_grid, self.Pres_grid)
         return self.Pres
 
-    # ---
+    def getKineticEnergy(self):
+        self.Wgrid = self.vmec.service.getKineticEnergy(self.vmecid)
+        return self.Wgrid
+
+    # ====== #
 
     def getgridiota(self):
         self.iota_grid = self.vmec.service.getIotaProfile(self.vmecid)
@@ -350,39 +390,47 @@ class VMECrest(Struct):
     def getiota(self):
         if self.iota_grid is None:
             self.iota_grid = self.getgridiota()
-        self.iota = _np.interp(self.roa, self.roa_grid,
-                               self.iota_grid)
+        self.iota = _np.interp(self.roa, self.roa_grid, self.iota_grid)
         return self.iota
 
-    # ---
+    # ====== #
 
     def getgriddVdrho(self):
         # Get the VMEC volume on the VMEC grid
-        #   There is an error in the Volume calculation!!!
-        #   This actually returns the derivative
-
-        # As long as there is an error in the getVolumeProfile webservice
-        if 1:
+        #   At one point there was an error in the Volume calculation!!!
+        #   It actually returned the derivative
+        hotfix = 1
+        if hotfix: # As long as there is an error in the getVolumeProfile webservice # TODO: check this regularly
             # on s-grid
             self.dVds_grid = self.vmec.service.getVolumeProfile(self.vmecid)
         else:
-            self.dVds_grid = self.vmec.service.getvp(self.vmecid)
+            # doesn't work: returns volume of LCFS for every flux-surface
+            self.dVds_grid = self.vmec.service.getDVolDs(self.vmecid)
+#            self.dVds_grid = self.vmec.service.getvp(self.vmecid)
         # endif
-        # Undo normalization from VMEC (2*pi*2*pi)
         self.dVds_grid = _np.array(self.dVds_grid, dtype=_np.float64)
+
+        if hotfix:
+            dxvar = _np.diff(self.torPsi_grid)
+            dyvar = -1*_np.diff(self.dVds_grid)
+            self.dVds_grid = _np.hstack((0, dyvar/dxvar))
+            self.dVds_grid = _np.array(self.dVds_grid, dtype=_np.float64)
+        # end if
+
+        # Undo normalization from VMEC (2*pi*2*pi)
         self.dVds_grid = (4*_np.pi**2)*self.dVds_grid
 
         # Convert to jacobian for integration
         self.dVdrho_grid = 2*self.roa_grid*self.dVds_grid
-
         return self.dVdrho_grid
 
     def getgridVol(self):
         if self.dVdrho_grid is None:
-            self.dVdrho_grid = self.getgriddVdrho()  # endif
+            self.dVdrho_grid = self.getgriddVdrho()
+        # endif
 
-        # As long as there is an error in the getVolumeProfile webservice
-        if 1:
+        hotfix = 0
+        if hotfix:  # As long as there is an error in the getVolumeProfile webservice
             dxvar = _np.diff(self.roa_grid)
             yvar = 0.5*(self.dVdrho_grid[:-1]+self.dVdrho_grid[1:])
             self.Vol_grid = _np.cumsum(yvar*dxvar)
@@ -403,16 +451,16 @@ class VMECrest(Struct):
         # Get the VMEC volume on the VMEC grid
         #   There is an error in the Volume calculation!!!
         #   This actually returns the derivative
-        if self.dVdrho_grid is None:
-            self.getgridVol()  # endif
-        self.dVdrho = _np.interp(self.roa, self.roa_grid,
-                                 self.dVdrho_grid)
+        if self.dVdrho_grid is None: self.getgridVol()  # endif
+        self.dVdrho = _np.interp(self.roa, self.roa_grid, self.dVdrho_grid)
 
-#        self.Vol_grid = _np.trapz(self.dVdrho_grid, x=self.roa_grid)
-#        self.Vol = _np.interp(self.roa, self.roa_grid, self.Vol_grid)
+        if 0: # As long as there is an error in the getVolumeProfile webservice
+            self.Vol_grid = _np.trapz(self.dVdrho_grid, x=self.roa_grid)
+            self.Vol = _np.interp(self.roa, self.roa_grid, self.Vol_grid)
+        # end if
 
-        if self.Vol_lcfs is None:
-            self.getgridVol_lcfs()  # endif
+        if self.Vol_lcfs is None:  self.getgridVol_lcfs()  # endif
+
         return self.Vol_lcfs, self.dVdrho
 
     # ========================================= #
@@ -427,12 +475,7 @@ class VMECrest(Struct):
         else:
             print("returned ID from Mgrid does not match given: "+return_id)
             return return_id
-
-
-
-#    def plotSurfaces(self):
-#
-#        return _ax
+        # end if
 
 # end class VMECrest
 
