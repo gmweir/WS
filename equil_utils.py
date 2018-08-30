@@ -316,7 +316,10 @@ class VMECrest(Struct):
 
         c = self.vmec.service.toCylinderCoordinates(self.vmecid, _coords)
         coords = _np.array(_np.vstack((c.x1, c.x2, c.x3)), dtype=_np.float64) # cylindrical coordinates
-
+        coords = _np.atleast_2d(coords)
+        if coords.shape[0] == 3:
+            coords = coords.T
+        # end if
         XX, YY = _ut.pol2cart(coords[:,0],coords[:,1])
         return XX, YY, coords[:,2]   # Cartesian coordinates
 
@@ -540,9 +543,7 @@ class w7xfield(Struct):
             currents = _np.asarray(currents, dtype=_np.float64)
             self.currents = currents
             self.localdir = ''
-            self.ratios = \
-                _np.int64(1e3*_np.round(currents/currents[0],
-                                        decimals=3))
+            self.ratios = _np.int64(1e3*_np.round(currents/currents[0], decimals=3))
             self._ratiosForVMECpicking = self.ratios.copy()
             self.pickW7Xconfig()
 
