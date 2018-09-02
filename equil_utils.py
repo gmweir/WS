@@ -53,7 +53,9 @@ class VMECrest(Struct):
                 realcurrents = _np.copy(self.currents)
             # end if
             self.realcurrents = _np.asarray(realcurrents, dtype=_np.float64)
-            self.getBfactor()
+            self.Bfactor = self.realcurrents[0]/self.currents[0]
+#            self.Bfactor *= 2.50/2.52 #(apprent issue in magnetic field strength)
+            self.getB00()
             self.getVMECgridDat()
         # endif
         if coords is not None:
@@ -270,21 +272,25 @@ class VMECrest(Struct):
 
     # ========================================= #
 
-    def getBfactor(self):
+    def getB00(self):
         x00, y00, z00 = self.getCARTcoord(_np.asarray([0,0,0],dtype=_np.float64)) # s,th,fi
         self.setCoords(coords=_np.atleast_2d([x00,y00,z00]), getData=False)
-        self.getBcart()
-        self.B00 = _np.copy(self.getmodB())
-        self.Bfactor = self.realcurrents[0]/self.currents[0]
+        self.getBcart(rescale=False)
+        self.B00_orig = _np.copy(self.getmodB())
 
-    def getBcart(self):  # TODO:  do you want to scale field outside of this or inside?
+        self.getBcart(rescale=True)
+        self.B00 = _np.copy(self.getmodB())
+
+
+
+    def getBcart(self, rescale=True):  # TODO:  do you want to scale field outside of this or inside?
         # Magnetic field utility needs cartesian coordinates
 
         # Call the webservices magnetic field utility
         b = self.vmec.service.magneticField(self.vmecid, self._pcart)
         self.Bxyz = _np.array(_np.vstack((b.x1, b.x2, b.x3)), dtype=_np.float64)
         self.Bxyz = self.Bxyz.transpose()
-        if hasattr(self,'Bfactor'):
+        if rescale and hasattr(self,'Bfactor'):
             self.Bxyz *= self.Bfactor
         # end if
         return self.Bxyz
