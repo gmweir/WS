@@ -33,11 +33,11 @@ class VMECrest(Struct):
     rooturl = 'http://10.66.24.160/'
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
+#    url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/'
 
     def __init__(self, shortID=None, coords=None, verbose=True, realcurrents=None):
         self.verbose = verbose
         self.shortID = shortID
-        self.coords = coords
 
         self.roa_grid = None
         self.torPsi_grid = None
@@ -53,13 +53,14 @@ class VMECrest(Struct):
                 realcurrents = _np.copy(self.currents)
             # end if
             self.realcurrents = _np.asarray(realcurrents, dtype=_np.float64)
-            self.Bfactor = self.realcurrents[0]/self.currents[0]
+            self.getBfactor()
             self.getVMECgridDat()
         # endif
         if coords is not None:
             self.setCoords(coords)
             # self.getCoordData()
         # endif
+        self.coords = coords
     # enddef __init__
 
     # ========================================= #
@@ -217,10 +218,13 @@ class VMECrest(Struct):
     # ========================================= #
     # ========================================= #
 
-    def setCoords(self, coords):
+    def setCoords(self, coords, getData=True):
         """
         Input cartesian coords as column vectors shape(# points, 3)
         """
+        coords = _np.atleast_2d(coords)
+        if coords.shape[1] != 3:  coords = coords.T  # endif
+
         self.nn = _np.size(coords, axis=0)
         self.XX = coords[:, 0]
         self.YY = coords[:, 1]
@@ -240,7 +244,9 @@ class VMECrest(Struct):
         self._pcyl.x2 = self.fi
         self._pcyl.x3 = self.ZZ
 
-        self.getCoordData()
+        if getData:
+            self.getCoordData()
+        # end if
     # enddef
 
     def getCoordData(self, tol=3e-3):
@@ -263,6 +269,13 @@ class VMECrest(Struct):
         return 1
 
     # ========================================= #
+
+    def getBfactor(self):
+        x00, y00, z00 = self.getCARTcoord(_np.asarray([0,0,0],dtype=_np.float64)) # s,th,fi
+        self.setCoords(coords=_np.atleast_2d([x00,y00,z00]), getData=False)
+        self.getBcart()
+        self.B00 = _np.copy(self.getmodB())
+        self.Bfactor = self.realcurrents[0]/self.currents[0]
 
     def getBcart(self):  # TODO:  do you want to scale field outside of this or inside?
         # Magnetic field utility needs cartesian coordinates
