@@ -57,6 +57,7 @@ class VMECrest(Struct):
 #            self.Bfactor *= 2.50/2.52 #(apprent issue in magnetic field strength)
             self.getB00()
             self.getVMECgridDat()
+            self.getVMECamin()
         # endif
         if coords is not None:
             self.setCoords(coords)
@@ -133,6 +134,14 @@ class VMECrest(Struct):
         # endif
         threed = self.vmec.service.getVmecRunData(vmecid, 'threed1')
         return threed
+
+    def getVMECamin(self,vmecid=None):
+        threed = self.getVMECthreed(vmecid)
+        ista = threed.find('Minor Radius          =')
+        iend = threed.find('[M] (from Cross Section)')
+        _, amin = threed[ista:iend].split('=')
+        self.amin = _np.float64(amin)
+        return self.amin
 
     def getVMECwouttxt(self, vmecid=None):
         if vmecid is None:

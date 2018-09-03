@@ -82,8 +82,8 @@ def get_config_sid(Bconf):
     co={'DBM000': 'w7x_ref_18',
 #        'EJM000': 'w7x_ref_8', # 1.3% beta
 #        'EJM000': 'w7x_ref_10', # 2.7% beta
-        'EJM000': 'w7x_ref_1', # 2.7% beta
-        'EIM000': 'w7x_ref_1', # w7x_ref_1
+        'EJM000': 'w7x_ref_13', # 2.7% beta
+        'EIM000': 'w7x_ref_13', # w7x_ref_1
         'EIM065': 'w7x_ref_7',
         'EIM200': 'w7x_ref_9',
         'KJM000': 'w7x_ref_163',
@@ -94,6 +94,21 @@ def get_config_sid(Bconf):
        }
     return co[Bconf]
 
+def get_config_amin(Bconf):
+    co={'DBM000': 0.54,
+#        'EJM000': 'w7x_ref_8', # 1.3% beta
+#        'EJM000': 'w7x_ref_10', # 2.7% beta
+        'EJM000': 0.51, # 2.7% beta
+        'EIM000': 0.51, # w7x_ref_1
+#        'EIM065': 'w7x_ref_7',
+#        'EIM200': 'w7x_ref_9',
+        'KJM000': 0.50,
+        'KKM000': 0.50,
+#        'KJM065': 'w7x_ref_27',
+        'FTM000': 0.50,
+        'EEM000': 0.49,
+       }
+    return co[Bconf]
 
 def get_reff(x,y,z,Vid):
     ''' reff = get_reff(x,y,z,VMEC_ID)'''
