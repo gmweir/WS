@@ -34,7 +34,8 @@ class VMECrest(Struct):
     resturl = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/run/'
     url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/'
 #    url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/'
-
+#    homeurl = _os.path.join('G://','Workshop','TRAVIS_tree','MagnConfigs','W7X')
+    homeurl = _os.path.join('X://','QME-ECE','Mapping-files')
     def __init__(self, shortID=None, coords=None, verbose=True, realcurrents=None):
         self.verbose = verbose
         self.shortID = shortID
@@ -58,6 +59,8 @@ class VMECrest(Struct):
             self.getB00()
             self.getVMECgridDat()
             self.getVMECamin()
+
+
         # endif
         if coords is not None:
             self.setCoords(coords)
@@ -65,6 +68,39 @@ class VMECrest(Struct):
         # endif
         self.coords = coords
     # enddef __init__
+
+    # ========================================= #
+    # ========================================= #
+
+    def save_wout(self, sfile=None):
+        if sfile is None:
+            epsfile = self.getVMECepseff()
+            self.vmectxtname = 'wout_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.txt'
+            sfile = _os.path.join(self.homeurl, self.vmectxtname)
+        # end if
+        with open(sfile,'w') as wout_txt:
+            wout_txt.write(self.getVMECwouttxt())
+        # end with
+        try:            wout_txt.close() # just in case
+        except:         pass
+    # end def save_wout
+
+    def save_epseff(self, sfile=None, reload=True):
+        epsfile = self.getVMECepseff()
+        self.epstxtname = 'eps_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.txt'
+
+        with open(sfile,'w') as eps_txt:
+            eps_txt.write(epsfile)
+        # end with
+        try:            eps_txt.close() # just in case
+        except:         pass
+        eps_roa, eps_eff, eps_ftrapped, _, _, _ = _np.loadtxt(
+            self.epstxtname, comments='%', delimiter=' ', usecols=(0,1,2))
+        self.eps = dict()
+        self.eps['roa'] = eps_roa
+        self.eps['epseff'] = eps_eff
+        self.eps['ftrapped'] = eps_ftrapped
+    # end def
 
     # ========================================= #
     # ========================================= #
