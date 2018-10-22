@@ -326,8 +326,6 @@ class VMECrest(Struct):
         self.getBcart(rescale=True)
         self.B00 = _np.copy(self.getmodB())
 
-
-
     def getBcart(self, rescale=True):  # TODO:  do you want to scale field outside of this or inside?
         # Magnetic field utility needs cartesian coordinates
 
@@ -543,6 +541,97 @@ class VMECrest(Struct):
             print("returned ID from Mgrid does not match given: "+return_id)
             return return_id
         # end if
+
+    # ========================================= #
+
+    def Cross_LCMS(self, r0, rd, amin=None, Rmaj=None):
+        """
+         Find intersection of the Ray with the last closed magnetic surface
+         The ray is R(t)=r0+rd*t  with t>0.
+         It is assumed, that the origin of ray lies outside of the last surface
+
+         INPUT:
+           r0  -- origin of the ray in cartesian coordinates
+           rd  -- unit vector of direction of the ray in cartesian coordinates
+         OUTPUT:
+          entryPoint is the intersection point of the Ray with the last closed
+          magnetic surface;
+          distance is the distance between r0 and entryPoint,
+          distance >= 0 if the function succeeds, distance < 0 otherwise.
+        """
+        if amin is None: amin=self.amin   # end if
+        if Rmaj is None: Rmaj=self.Rmaj   # end if
+        entryPoint = 0
+        distance   = -1
+
+        s = (self.CalcFluxCart(r0))**2.0
+        if(s<1): return entryPoint, distance # return if the origin lies inside LCMS
+
+        dl = amin*0.04         # step 2cm for W7X
+        Nr = rd/_np.sqrt(_np.dot(rd,rd))
+        dr = dl*Nr
+
+        N = int(100.0*Rmaj/dl)     # max number of iterations
+        r = _np.copy(r0)
+        Rmax2 = 4*Rmaj**2
+        r2 = _np.dot(r,r)
+        while (N>1) or (s>1):   # cycle while not inside
+            rprev2 = _np.copy(r2)
+            r += dr             # move forward along ray
+            r2 = _np.dot(r,r)
+            if(r2>rprev2)*(r2>Rmax2): return entryPoint, distance # end if, return if point moves far outwards
+            N -= 1
+            if (N < 1): return entryPoint, distance   # end if entry point not found
+            s = (self.CalcFluxCart(r))**2.0
+            if(s<1): break # cycle while not inside
+        # end while
+
+        # we are near LCMS, bracket the LCMS between two point rOutside and entryPoint
+        rOutside = _np.copy(r)   # 'nearest' outside point
+        N  = 32                  # max number of iterations
+        s = (self.CalcFluxCart(r))**2.0
+        if (s<=1):               # if current position lies inside
+            while (N>1)+(s<1):     # cycle while inside LCMS
+               r -= dr         # move backward along the ray
+               N -= 1
+               if (N < 1): return entryPoint, distance  # entry point not found
+               s = (self.CalcFluxCart(r))**2.0
+               if (s>=1): break        # exit if outside
+            # end for                  # cycle while inside LCMS
+            rOutside   = _np.copy(r)   # 'nearest' outside point
+            entryPoint = r+dr         # move inside and save position
+        else:                      # if current position lies slightly outside
+            while (N>1)+(s>1):     # cycle while outside LCMS
+                r += dr              # move forward along ray
+                N -= 1
+                if (N < 1): return entryPoint, distance # entry point not found
+                s = (self.CalcFluxCart(r))**2.0
+                if (s<1): break         # exit if inside
+            # end for                 # cycle while outside LCMS
+            entryPoint = _np.copy(r)  # inside, save position
+        # end if
+
+        N = 100
+        # Find intersection of the Ray with the last surface by bisection
+        while (N>0):
+            r = (entryPoint+rOutside)/2
+            s = (self.CalcFluxCart(r))**2.0
+            dl = 1.0 - s
+            if (dl< 0):
+              rOutside = _np.copy(r)
+            else:
+              entryPoint = _np.copy(r)        # if r lies inside
+              if(dl<=1e-3): break # end if    # Ok, done
+            # end if
+            N -= 1
+        # end while
+
+        dr = entryPoint-r0
+        distance = _np.sqrt(_np.dot(dr,dr))
+        return entryPoint,distance
+    # end def Cross_LCMS
+
+    # ========================================= #
 
 # end class VMECrest
 
