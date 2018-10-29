@@ -36,7 +36,12 @@ class VMECrest(Struct):
 #    url = 'http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/'
 #    homeurl = _os.path.join('G://','Workshop','TRAVIS_tree','MagnConfigs','W7X')
     homeurl = _os.path.join('X://','QME-ECE','Mapping-files')
-    def __init__(self, shortID=None, coords=None, verbose=True, realcurrents=None):
+    def __init__(self, shortID=None, **kwargs):
+#        shortID = kwargs.get('shortID', None)
+        coords = kwargs.get('coords', None)
+        verbose = kwargs.get('verbose', True)
+        realcurrents = kwargs.get('realcurrents',None)
+#        Bfactor = kwargs.get('Bfactor',None)
         self.verbose = verbose
         self.shortID = shortID
 
@@ -55,12 +60,10 @@ class VMECrest(Struct):
             # end if
             self.realcurrents = _np.asarray(realcurrents, dtype=_np.float64)
             self.Bfactor = self.realcurrents[0]/self.currents[0]
-#            self.Bfactor *= 2.50/2.52 #(apprent issue in magnetic field strength)
+#            if Bfactor is not None: self.Bfactor=Bfactor  # end if
             self.getB00()
             self.getVMECgridDat()
             self.getVMECamin()
-
-
         # endif
         if coords is not None:
             self.setCoords(coords)
