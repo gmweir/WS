@@ -61,6 +61,7 @@ class VMECrest(Struct):
             self.realcurrents = _np.asarray(realcurrents, dtype=_np.float64)
             self.Bfactor = self.realcurrents[0]/self.currents[0]
 #            if Bfactor is not None: self.Bfactor=Bfactor  # end if
+#            self.getMagneticAxis(torFi=0.0)
             self.getB00()
             self.getVMECgridDat()
             self.getVMECamin()
@@ -150,7 +151,7 @@ class VMECrest(Struct):
             # endif
         # endif
         acoord = self.vmec.service.getMagneticAxis(vmecid, torFi)
-        self.axis_coord = self.Bxyz = _np.array(_np.vstack((acoord.x1, acoord.x2, acoord.x3)), dtype=_np.float64)
+        self.axis_coord = _np.array(_np.vstack((acoord.x1, acoord.x2, acoord.x3)), dtype=_np.float64)
         return self.axis_coord
 
     def getVMECinput(self, vmecid=None):
@@ -322,6 +323,7 @@ class VMECrest(Struct):
 
     def getB00(self):
         x00, y00, z00 = self.getCARTcoord(_np.asarray([0,0,0],dtype=_np.float64)) # s,th,fi
+        self.cart_axis_phi0 = _np.asarray([x00, y00, z00], dtype=_np.float64)
         self.setCoords(coords=_np.atleast_2d([x00,y00,z00]), getData=False)
         self.getBcart(rescale=False)
         self.B00_orig = _np.copy(self.getmodB())
