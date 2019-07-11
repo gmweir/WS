@@ -82,8 +82,8 @@ def get_config_sid(Bconf):
     co={'DBM000': 'w7x_ref_18',
 #        'EJM000': 'w7x_ref_8', # 1.3% beta
 #        'EJM000': 'w7x_ref_10', # 2.7% beta
-        'EJM000': 'w7x_ref_13', # 2.7% beta
-        'EIM000': 'w7x_ref_13', # w7x_ref_1
+#        'EJM000': 'w7x_ref_13', # 2.7% beta
+        'EIM000': 'w7x_ref_1', # w7x_ref_1
         'EIM065': 'w7x_ref_7',
         'EIM200': 'w7x_ref_9',
         'KJM000': 'w7x_ref_163',
@@ -150,7 +150,7 @@ def fluxsurfaces(s,phi,Vid,N=256,disp=1,_ax=plt, fmt='k-'):
         nn=len(s)
         phi=np.ones(nn)*phi
     # end if
-    w=VClient.service.getFluxSurfaces(Vid, phi*np.pi/180, s, N)
+    w=VClient.service.getFluxSurfaces(Vid, phi*np.pi/180.0, s, N)
     R=np.zeros((nn,N))
     z=np.zeros((nn,N))
     for ii in range(nn):
