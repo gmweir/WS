@@ -4,29 +4,36 @@ Created on Mon Jul 25 17:02:07 2016
 
 @author: gawe
 """
-# ================================================================= #
-# ================================================================= #
+# ========================================================================== #
+# ========================================================================== #
 
 # This section is to improve compatability between bython 2.7 and python 3x
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
-# ================================================================= #
+# ========================================================================== #
 
 import os as _os
 import numpy as _np
 from osa import Client as _cl
 
-from pybaseutils import utils as _ut
-from pybaseutils.Struct import Struct
 from W7X import jsonutils as _jsnut
 
+from pybaseutils import utils as _ut
+from pybaseutils.Struct import Struct
+try:
+    from pybaseutils.equilutils import VMEC_Struct
+except:
+    VMEC_Struct = Struct
+# end try
+
 __metaclass__ = type
-# ================================================================= #
-# ================================================================= #
+
+# ========================================================================== #
+# ========================================================================== #
 
 
-class VMECrest(Struct):
+class VMECrest(VMEC_Struct):
     # Import the VMEC rest client
 #    vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v6?wsdl")
     vmec = _cl("http://esb.ipp-hgw.mpg.de:8280/services/vmec_v8?wsdl")
@@ -62,9 +69,11 @@ class VMECrest(Struct):
             self.Bfactor = self.realcurrents[0]/self.currents[0]
 #            if Bfactor is not None: self.Bfactor=Bfactor  # end if
 #            self.getMagneticAxis(torFi=0.0)
+            self.getVMECamin()
+            self.getVMECfieldperiod()
             self.getB00()
             self.getVMECgridDat()
-            self.getVMECamin()
+
         # endif
         if coords is not None:
             self.setCoords(coords)
@@ -175,14 +184,6 @@ class VMECrest(Struct):
         threed = self.vmec.service.getVmecRunData(vmecid, 'threed1')
         return threed
 
-    def getVMECamin(self,vmecid=None):
-        threed = self.getVMECthreed(vmecid)
-        ista = threed.find('Minor Radius          =')
-        iend = threed.find('[M] (from Cross Section)')
-        _, amin = threed[ista:iend].split('=')
-        self.amin = _np.float64(amin)
-        return self.amin
-
     def getVMECwouttxt(self, vmecid=None):
         if vmecid is None:
             vmecid = self.vmecid
@@ -215,8 +216,16 @@ class VMECrest(Struct):
         if vmecid is None:
             vmecid = self.vmecid
         # endif
-        FP = self.vmec.service.getFieldPeriod(vmecid)
-        return FP
+        self.nfp = self.vmec.service.getFieldPeriod(vmecid)
+        return self.nfp
+
+    def getVMECamin(self,vmecid=None):
+        threed = self.getVMECthreed(vmecid)
+        ista = threed.find('Minor Radius          =')
+        iend = threed.find('[M] (from Cross Section)')
+        _, amin = threed[ista:iend].split('=')
+        self.amin = _np.float64(amin)
+        return self.amin
 
     def get_new_id(self):
         import getpass as _gp
@@ -356,6 +365,7 @@ class VMECrest(Struct):
 
     # ========================================= #
 
+
     def getVMECcoord(self, tol=3e-3):
         # Get the VMEC coordinates at each point: s,th,zi
         vmec_coords = self.vmec.service.toVMECCoordinates(self.vmecid, self._pcyl, tol)
@@ -469,7 +479,7 @@ class VMECrest(Struct):
         # Get the VMEC volume on the VMEC grid
         #   At one point there was an error in the Volume calculation!!!
         #   It actually returned the derivative
-        hotfix = 1
+        hotfix = 0
         if hotfix: # As long as there is an error in the getVolumeProfile webservice # TODO: check this regularly
             # on s-grid
             self.dVds_grid = self.vmec.service.getVolumeProfile(self.vmecid)
@@ -524,7 +534,7 @@ class VMECrest(Struct):
         if self.dVdrho_grid is None: self.getgridVol()  # endif
         self.dVdrho = _np.interp(self.roa, self.roa_grid, self.dVdrho_grid)
 
-        if 0: # As long as there is an error in the getVolumeProfile webservice
+        if 1: # As long as there is an error in the getVolumeProfile webservice
             self.Vol_grid = _np.trapz(self.dVdrho_grid, x=self.roa_grid)
             self.Vol = _np.interp(self.roa, self.roa_grid, self.Vol_grid)
         # end if
@@ -533,21 +543,21 @@ class VMECrest(Struct):
 
         return self.Vol_lcfs, self.dVdrho
 
-    # ========================================= #
+    # ===================================================================== #
 
-    def createMgrid(self, id, magconf, minR, maxR, minZ, maxZ, resR, resZ, resPhi,
+    def createMgrid(self, idin, magconf, minR, maxR, minZ, maxZ, resR, resZ, resPhi,
                     fieldPeriods=5, isStellaratorSymmetric=True):
 
         return_id = self.vmec.service.createMgrid(magconf, minR, maxR, resR, minZ, maxZ, resZ, resPhi,
-                                      isStellaratorSymmetric, fieldPeriods, id)
-        if return_id == id:
+                                      isStellaratorSymmetric, fieldPeriods, idin)
+        if return_id == idin:
             return return_id
         else:
             print("returned ID from Mgrid does not match given: "+return_id)
             return return_id
         # end if
 
-    # ========================================= #
+    # ===================================================================== #
 
     def Cross_LCMS(self, r0, rd, amin=None, Rmaj=None):
         """
@@ -636,12 +646,62 @@ class VMECrest(Struct):
         return entryPoint,distance
     # end def Cross_LCMS
 
-    # ========================================= #
+    # ===================================================================== #
+    # ===================================================================== #
+
+    def _extract_data(self, verbose=None):
+        if verbose is None:
+            if hasattr(self, 'verbose'):
+                verbose = self.verbose
+            else:
+                verbose = True
+            # end if
+        # end if
+
+        self.VMEC_Data = _ut.Struct() # Instantiate an empty class of type structure
+
+        # stellarator symmetric terms
+        self.VMEC_Data.rmnc = self.vmec.service.getFourierCoefficients(self.vmecid, 'RCos')
+        self.VMEC_Data.ns = _np.copy(self.rmnc.numRadialPoints) # number of radial flux surfaces
+        self.VMEC_Data.xn = _np.asarray(self.rmnc.toroidalModeNumbers)  # toroidal mode numbers
+        self.VMEC_Data.xm = _np.asarray(self.rmnc.poloidalModeNumbers)  # poloidal mode numbers
+
+        self.VMEC_Data.rmnc = _np.asarray(self.VMEC_Data.rmnc.coefficients)
+        self.VMEC_Data.zmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'ZSin').coefficients)
+        self.VMEC_Data.bmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BCos').coefficients)
+        self.VMEC_Data.lmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'LambdaSin').coefficients)
+        self.VMEC_Data.gmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'gCos').coefficients)
+        self.VMEC_Data.bsubumnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubUCos').coefficients)
+        self.VMEC_Data.bsubvmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubVCos').coefficients)
+        self.VMEC_Data.bsubsmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubSSin').coefficients)
+        self.VMEC_Data.bsupumnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupUCos').coefficients)
+        self.VMEC_Data.bsupvmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupVCos').coefficients)
+        self.VMEC_Data.currumnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'CurrUCos').coefficients)
+        self.VMEC_Data.currvmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'CurrVCos').coefficients)
+        self.VMEC_Data.currumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'CurrUSin').coefficients)
+        self.VMEC_Data.currvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'CurrVSin').coefficients)
+
+#        if self.iasym:
+#        # non-stellarator symmetric terms
+#        self.VMEC_Data.rmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'RSin'))
+#        self.VMEC_Data.zmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'ZCos').coefficients)
+#        self.VMEC_Data.bmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BSin').coefficients)
+#        self.VMEC_Data.lmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'LambdaCos').coefficients)
+#        self.VMEC_Data.gmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'gSin').coefficients)
+#        self.VMEC_Data.bsubumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubUSin').coefficients)
+#        self.VMEC_Data.bsubvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubVSin').coefficients)
+#        self.VMEC_Data.bsubsmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubSCos').coefficients)
+#        self.VMEC_Data.bsupumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupUSin').coefficients)
+#        self.VMEC_Data.bsupvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupVSin').coefficients)
+        # end if non-stellarator symmetric
+
+    # end def
 
 # end class VMECrest
 
-# ================================================================= #
-# ================================================================= #
+
+# ========================================================================== #
+# ========================================================================== #
 
 
 class w7xCurrentEncoder(_jsnut.jsnpy):
@@ -688,6 +748,10 @@ class w7xCurrentEncoder(_jsnut.jsnpy):
 
     def __str__(self):
         return _jsnut._jsn.dumps(self.response)
+# end class w7xCurrentEncoder
+
+# ========================================================================== #
+# ========================================================================== #
 
 
 class w7xfield(Struct):
@@ -1065,8 +1129,9 @@ class w7xfield(Struct):
         return self.configname
 # end class w7xconfigs
 
-# ================================================================= #
-# ================================================================= #
+# ========================================================================== #
+# ========================================================================== #
+
 
 if __name__ == '__main__':
     currents = _np.array([12361.89994498,
@@ -1108,3 +1173,7 @@ if __name__ == '__main__':
     _ax3.set_xlabel('s')
     _ax3.set_ylabel(r'Volume$[m^{-3}]$')
 # endif
+
+# ========================================================================== #
+# ========================================================================== #
+
