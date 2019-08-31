@@ -658,13 +658,13 @@ class VMECrest(VMEC_Struct):
             # end if
         # end if
 
-        self.VMEC_Data = _ut.Struct() # Instantiate an empty class of type structure
+        self.VMEC_Data = Struct() # Instantiate an empty class of type structure
 
         # stellarator symmetric terms
         self.VMEC_Data.rmnc = self.vmec.service.getFourierCoefficients(self.vmecid, 'RCos')
-        self.VMEC_Data.ns = _np.copy(self.rmnc.numRadialPoints) # number of radial flux surfaces
-        self.VMEC_Data.xn = _np.asarray(self.rmnc.toroidalModeNumbers)  # toroidal mode numbers
-        self.VMEC_Data.xm = _np.asarray(self.rmnc.poloidalModeNumbers)  # poloidal mode numbers
+        self.VMEC_Data.ns = _np.copy(self.VMEC_Data.rmnc.numRadialPoints) # number of radial flux surfaces
+        self.VMEC_Data.xn = _np.asarray(self.VMEC_Data.rmnc.toroidalModeNumbers)  # toroidal mode numbers
+        self.VMEC_Data.xm = _np.asarray(self.VMEC_Data.rmnc.poloidalModeNumbers)  # poloidal mode numbers
 
         self.VMEC_Data.rmnc = _np.asarray(self.VMEC_Data.rmnc.coefficients)
         self.VMEC_Data.zmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'ZSin').coefficients)
@@ -682,17 +682,17 @@ class VMECrest(VMEC_Struct):
         self.VMEC_Data.currvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'CurrVSin').coefficients)
 
 #        if self.iasym:
-#        # non-stellarator symmetric terms
-#        self.VMEC_Data.rmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'RSin'))
-#        self.VMEC_Data.zmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'ZCos').coefficients)
-#        self.VMEC_Data.bmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BSin').coefficients)
-#        self.VMEC_Data.lmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'LambdaCos').coefficients)
-#        self.VMEC_Data.gmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'gSin').coefficients)
-#        self.VMEC_Data.bsubumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubUSin').coefficients)
-#        self.VMEC_Data.bsubvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubVSin').coefficients)
-#        self.VMEC_Data.bsubsmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubSCos').coefficients)
-#        self.VMEC_Data.bsupumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupUSin').coefficients)
-#        self.VMEC_Data.bsupvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupVSin').coefficients)
+    #        # non-stellarator symmetric terms
+    #        self.VMEC_Data.rmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'RSin'))
+    #        self.VMEC_Data.zmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'ZCos').coefficients)
+    #        self.VMEC_Data.bmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BSin').coefficients)
+    #        self.VMEC_Data.lmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'LambdaCos').coefficients)
+    #        self.VMEC_Data.gmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'gSin').coefficients)
+    #        self.VMEC_Data.bsubumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubUSin').coefficients)
+    #        self.VMEC_Data.bsubvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubVSin').coefficients)
+    #        self.VMEC_Data.bsubsmnc = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsubSCos').coefficients)
+    #        self.VMEC_Data.bsupumns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupUSin').coefficients)
+    #        self.VMEC_Data.bsupvmns = _np.asarray(self.vmec.service.getFourierCoefficients(self.vmecid, 'BsupVSin').coefficients)
         # end if non-stellarator symmetric
 
     # end def
