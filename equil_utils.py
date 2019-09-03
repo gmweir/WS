@@ -17,7 +17,10 @@ import os as _os
 import numpy as _np
 from osa import Client as _cl
 
-from W7X import jsonutils as _jsnut
+#from W7X import jsonutils as _jsnut
+from codecs import getreader as _getrdr
+from pyversion import version as _ver
+import json as _jsn
 
 from pybaseutils import utils as _ut
 from pybaseutils.Struct import Struct
@@ -28,6 +31,71 @@ except:
 # end try
 
 __metaclass__ = type
+
+# ========================================================================== #
+# ========================================================================== #
+
+
+class ArchiveError(Exception):
+    def __init__(self, **kwargs):
+        # Now for your custom code...
+        self.status = kwargs.get('status',0)
+        self.message = kwargs.get('message',' ')
+        if self.message.find(':')>-1:
+            ind = self.message.find(':')+1
+            self.exception = self.message[:ind]
+            self.error = self.message[ind:]
+        else:
+            self.exception = None
+            self.error = self.status
+        # end if
+
+        # Call the base class constructor with the parameters it needs
+        super(ArchiveError, self).__init__(self.message)
+    # end def __init__
+# end class ArchiveError
+
+def with_open_json(request):
+    reader = _getrdr("utf-8")
+    resp = None
+    try:
+#        if request.find("/views/")>-1:
+#            request = parse_alias_stream(request)
+#        # end if
+        resp = _ver.urllib.urlopen(request)
+        jsonsignal = _jsn.load(reader(resp), strict=False)
+        if hasattr(jsonsignal,'message') and jsonsignal['message'].find('IllegalArgumentException:')>-1:
+            print(jsonsignal['request'])
+            print(jsonsignal['status'])
+            print(jsonsignal['message'])
+            raise ArchiveError
+    except:
+        jsonsignal = None
+        pass
+#        raise
+    finally:
+        if resp is not None:
+            resp.close()
+        # endif
+    # end try
+    return jsonsignal
+
+def url_exists(request):
+    resp = None
+    try:
+        resp = _ver.urllib.urlopen(request)  # @UndefinedVariable
+    except:
+#        raise
+        raise #Exception()
+    finally:
+        if resp is not None:
+            resp.close()
+            urlexists = True
+        else:
+            urlexists = False
+        #endif
+    #end try
+    return urlexists
 
 # ========================================================================== #
 # ========================================================================== #
@@ -704,7 +772,7 @@ class VMECrest(VMEC_Struct):
 # ========================================================================== #
 
 
-class w7xCurrentEncoder(_jsnut.jsnpy):
+class w7xCurrentEncoder(Struct):
     baseurl = "http://svvmec1.ipp-hgw.mpg.de:5000/encode_config?"
     def __init__(self, currents=None):
         if currents is not None:
@@ -746,9 +814,13 @@ class w7xCurrentEncoder(_jsnut.jsnpy):
         self.avgB0 = self.response['techn. av. Bax/T']
         self.vmecid = self.response['vmec-id-string']
 
+    def openURL(self, url):
+        return with_open_json(url)
+
     def __str__(self):
-        return _jsnut._jsn.dumps(self.response)
+        return _jsn.dumps(self.response)
 # end class w7xCurrentEncoder
+
 
 # ========================================================================== #
 # ========================================================================== #
@@ -814,7 +886,7 @@ class w7xfield(Struct):
         folderurl05 = vmecname+'/05/0000/'
         try:
             url01 = baseurl+folderurl01+kVMECfile01
-            existsUrl01 = _jsnut.url_exists(url01)
+            existsUrl01 = url_exists(url01)
 #            with _ver.urllib.urlopen(url01) as f:  # @UnusedVariable
 #                existsUrl01 = True
         except IOError:
@@ -823,7 +895,7 @@ class w7xfield(Struct):
 
         try:
             url05 = baseurl+folderurl05+kVMECfile05
-            existsUrl05 = _jsnut.url_exists(url05)
+            existsUrl05 = url_exists(url05)
 #            with _ver.urllib.urlopen(url05) as f:  # @UnusedVariable
 #                existsUrl05 = True
         except IOError:
