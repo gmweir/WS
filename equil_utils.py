@@ -153,17 +153,40 @@ class VMECrest(VMEC_Struct):
     # ========================================= #
     # ========================================= #
 
-    def save_wout(self, sfile=None):
+    def save_wout(self, sfile=None, homeurl=None):
+        if homeurl is None:
+            homeurl = self.homeurl
         if sfile is None:
             epsfile = self.getVMECepseff()
             self.vmectxtname = 'wout_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.txt'
-            sfile = _os.path.join(self.homeurl, self.vmectxtname)
+            sfile = _os.path.join(homeurl, self.vmectxtname)
         # end if
-        with open(sfile,'w') as wout_txt:
-            wout_txt.write(self.getVMECwouttxt())
-        # end with
-        try:            wout_txt.close() # just in case
-        except:         pass
+        try:
+            wout = open(sfile,'w')
+            wout.write(self.getVMECwouttxt())
+            wout.close()
+        except:            pass
+        finally:
+            try:            wout.close() # just in case
+            except:        pass
+    # end def save_wout
+
+    def save_netcdf(self, sfile=None, homeurl=None):
+        if homeurl is None:
+            homeurl = self.homeurl
+        if sfile is None:
+            epsfile = self.getVMECepseff()
+            self.vmecnetcdf = 'wout_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.nc'
+            sfile = _os.path.join(homeurl, self.vmecnetcdf)
+        # end if
+        try:
+            wout = open(sfile,'wb')
+            wout.write(self.getVMECwoutnc())
+            wout.close()
+        except:            pass
+        finally:
+            try:            wout.close() # just in case
+            except:        pass
     # end def save_wout
 
     def save_epseff(self, sfile=None, reload=True):
