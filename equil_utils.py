@@ -156,10 +156,13 @@ class VMECrest(VMEC_Struct):
     def save_wout(self, sfile=None, homeurl=None):
         if homeurl is None:
             homeurl = self.homeurl
+        else:
+            self.homeurl = homeurl
+        # end if
         if sfile is None:
             epsfile = self.getVMECepseff()
             self.vmectxtname = 'wout_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.txt'
-            sfile = _os.path.join(homeurl, self.vmectxtname)
+            sfile = _os.path.join(self.homeurl, self.vmectxtname)
         # end if
         try:
             wout = open(sfile,'w')
@@ -174,10 +177,13 @@ class VMECrest(VMEC_Struct):
     def save_netcdf(self, sfile=None, homeurl=None):
         if homeurl is None:
             homeurl = self.homeurl
+        else:
+            self.homeurl = homeurl
+        # end if
         if sfile is None:
             epsfile = self.getVMECepseff()
             self.vmecnetcdf = 'wout_w7x'+epsfile[epsfile.find('w7x')+3:epsfile.find('.data\n%')]+'.nc'
-            sfile = _os.path.join(homeurl, self.vmecnetcdf)
+            sfile = _os.path.join(self.homeurl, self.vmecnetcdf)
         # end if
         try:
             wout = open(sfile,'wb')
