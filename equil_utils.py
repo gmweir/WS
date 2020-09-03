@@ -747,6 +747,9 @@ class VMECrest(VMEC_Struct):
     # ===================================================================== #
 
     def _extract_data(self, verbose=None):
+        """
+
+        """
         if verbose is None:
             if hasattr(self, 'verbose'):
                 verbose = self.verbose
@@ -758,6 +761,7 @@ class VMECrest(VMEC_Struct):
         self.VMEC_Data = Struct() # Instantiate an empty class of type structure
 
         # stellarator symmetric terms
+        # now getFourierCoefficients outputs arrray format stuff as in VMEC netcdf
         self.VMEC_Data.rmnc = self.vmec.service.getFourierCoefficients(self.vmecid, 'RCos')
         self.VMEC_Data.ns = _np.copy(self.VMEC_Data.rmnc.numRadialPoints) # number of radial flux surfaces
         self.VMEC_Data.xn = _np.asarray(self.VMEC_Data.rmnc.toroidalModeNumbers)  # toroidal mode numbers
