@@ -17,8 +17,8 @@ from __future__ import absolute_import, with_statement, absolute_import, \
 __version__ = "2017.05.24.15"
 __all__ = ['equil_utils','magfield']
 
-from pybaseutils.ssh import CheckWebServicesConnection #, CheckVMECConnection, \
-#                  CheckRESTConnection, CheckENCODERConnection
+from pybaseutils.ssh import CheckWebServicesConnection, CheckVMECConnection, \
+                  CheckRESTConnection, CheckENCODERConnection
 
 if CheckWebServicesConnection():  # returns a boolean True if the pinger receives a packet back
     try:
@@ -30,8 +30,8 @@ if CheckWebServicesConnection():  # returns a boolean True if the pinger receive
         __osaonpath__ = False
     # end try
 
-    if __osaonpath__: # and CheckVMECConnection() and CheckRESTConnection() \
-                      # and CheckENCODERConnection():
+    if __osaonpath__ and CheckVMECConnection() and CheckRESTConnection() \
+                       and CheckENCODERConnection():
         from . import equil_utils
         from . import magfield
         from . import VMEC
