@@ -1,34 +1,34 @@
-###############################################################################    
-###############################################################################    
+###############################################################################
+###############################################################################
 """
-    This is the field line package from Sergey with significant revisions for 
-    use by G.M. Weir.  
-    
-    It uses the wsdl services at W7-X to calculate 
+    This is the field line package from Sergey with significant revisions for
+    use by G.M. Weir.
+
+    It uses the wsdl services at W7-X to calculate
       __makeConfigFromCurrents - configurations based on input currents
       getW7XMainMagneticField - Bx,By,Bz at input coordinates (X,Y,Z)
-      findMagneticAxis - Magnetic Axis coordinates 
+      findMagneticAxis - Magnetic Axis coordinates
           getAxisRMean - Mean magnetic axis at those coordinates (R[m])
           getAxisBMean - Mean magnetic field at those coordinates (B[m])
       getAxisBAtPhi - Magnetic field strength on axis at input toroidal angle
-      makePoincarePlot - Poincare plot of the field lines for given 
+      makePoincarePlot - Poincare plot of the field lines for given
                          configuration at a toroidal plane
-                         
+
      Revisions:
-          unscale_currents - Unscales experimental currents for webservices       
+          unscale_currents - Unscales experimental currents for webservices
 
     To do:
-        Add function to calculate <gradrho>, <|gradrho|^2>, roa, dV/droa     
+        Add function to calculate <gradrho>, <|gradrho|^2>, roa, dV/droa
 
 http://esb-dev2.ipp-hgw.mpg.de:9763/docs/fieldlinetracer.html#traceLineTracing
-            roa, iota, diotadroa - trace (MagneticCharacteristics)            
+            roa, iota, diotadroa - trace (MagneticCharacteristics)
 """
 
 from __future__ import absolute_import, with_statement, absolute_import, division, \
                        print_function, unicode_literals
 __metaclass__ = type
 
-###############################################################################    
+###############################################################################
 
 import numpy as _np
 import osa
@@ -39,18 +39,18 @@ __url = "http://esb.ipp-hgw.mpg.de:8280/services/FieldLineProxy?wsdl"
 __fltsrv = osa.Client(__url)
 __npc_num_windings = 108
 __pc_num_windings = 36
-__ideal_db_coils =  [160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 
-                     171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 
-                     182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 
-                     193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 
-                     204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 
-                     215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 
+__ideal_db_coils =  [160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170,
+                     171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181,
+                     182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192,
+                     193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203,
+                     204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214,
+                     215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225,
                      226, 227, 228, 229]
 __asbuilt_db_coils = range(522, 592)
 __asbuilt_db_coils_EMload = range(1152, 1222)
 
-def __makeConfigFromCurrents(currents, scale = 1.0, useGrid = False, 
-                             gridSymmetry = 5, coils = None, 
+def __makeConfigFromCurrents(currents, scale = 1.0, useGrid = False,
+                             gridSymmetry = 5, coils = None,
                              useIdealCoils = True, withEMload = False):
     """
         Create magnetic configuration object, given currents.
@@ -85,18 +85,18 @@ def __makeConfigFromCurrents(currents, scale = 1.0, useGrid = False,
 def unscale_currents(currents):
     return _np.concatenate( (currents[:5]/__npc_num_windings,
                              currents[5:7]/__pc_num_windings), axis=0)
-    
-def getW7XMainMagneticField(currents, points, scale = 1.0, 
+
+def getW7XMainMagneticField(currents, points, scale = 1.0,
                             useIdealCoils = True):
     """Calculate magnetic field for given currents and points
 
     Parameters
     ----------
     currents : array
-        Currents NPC1, NPC2, NPC3, NPC4, NPC5, PCA, PCB [A]. Currents should 
+        Currents NPC1, NPC2, NPC3, NPC4, NPC5, PCA, PCB [A]. Currents should
         be per winding. Multiplication with the number of windings is done
         internally.
-    
+
     points : 2d array
         XYZ coordinates [m] of the points of interest
 
@@ -104,12 +104,13 @@ def getW7XMainMagneticField(currents, points, scale = 1.0,
         Scale factor for currents.
     useIdealCoils : bool, optional
         Use ideal or as built filaments.
-    
+
     Returns
     -------
     out : 2d array
         XYZ components of the field [T].
     """
+    currents = _np.asarray(currents)
     config = __makeConfigFromCurrents(currents, scale = scale, useGrid=False,
                                       useIdealCoils = useIdealCoils)
 
@@ -135,7 +136,7 @@ def findMagneticAxis(currents, scale = 1.0, step = 3e-2, useGrid = False, symmet
     currents : array
         Currents NPC1, NPC2, NPC3, NPC4, NPC5, PCA, PCB [A]. Currents should be per
         winding. Multiplication with the number of windings is done internally.
-    
+
     points : 2d array
         XYZ coordinates [m] of the points of interest
     scale : float, optional
@@ -158,12 +159,13 @@ def findMagneticAxis(currents, scale = 1.0, step = 3e-2, useGrid = False, symmet
         Require axis accuracy in [m].
     useIdealCoils : bool, optional
         Use ideal or as build filaments.
-    
+
     Returns
     -------
     out : 2d array
         Axis vertices with required step.
     """
+    currents = _np.asarray(currents)
     config = __makeConfigFromCurrents(currents, scale = scale, useGrid=False,
                                       useIdealCoils = useIdealCoils)
     settings = __fltsrv.types.AxisSettings(1)
@@ -192,7 +194,7 @@ def getAxisRMean(axis):
     Parameters
     ----------
     axis : 2d array
-    
+
     Returns
     -------
     float
@@ -212,7 +214,7 @@ def getAxisBMean(currents, axis, scale = 1.0, useIdealCoils = True):
         Currents scale factor.
     useIdealCoils : bool, optional
         Use ideal or as build filaments.
-    
+
     Returns
     -------
     float
@@ -237,7 +239,7 @@ def getAxisBAtPhi(currents, axis, phi0, scale = 1.0, useIdealCoils = True):
         Currents scale factor.
     useIdealCoils : bool, optional
         Use ideal or as build filaments.
-    
+
     Returns
     -------
     float
@@ -336,7 +338,7 @@ def makePoincarePlot(step, phi0, numPoints,
     p3d.x1 = startPoints[:,0].tolist()
     p3d.x2 = startPoints[:,1].tolist()
     p3d.x3 = startPoints[:,2].tolist()
-    
+
     if useSymmetry:
         gridSymmetry = 5
     else:
@@ -346,8 +348,9 @@ def makePoincarePlot(step, phi0, numPoints,
                                            useGrid = useGrid, gridSymmetry = gridSymmetry)
         config.coilsIds = None
         config.coilsIdsCurrents = None
-        config.configIds = configId
+        config.configIds = [configId]
     elif config is None and currents is not None:
+        currents = _np.asarray(currents)
         config = __makeConfigFromCurrents(currents,
                                           useGrid = useGrid, gridSymmetry = gridSymmetry,
                                           useIdealCoils = useIdealCoils)
@@ -409,6 +412,97 @@ def makePoincarePlot(step, phi0, numPoints,
             xyz = _np.array((x,y,z)).T
             out2.append(xyz)
 
-    return _np.array(out1), _np.array(out2)
+    return _np.array(out1), _np.array(out2), res
 
+def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=80, step=0.2,
+             useSymmetry=True, config=None, currents=None, useGrid=True, useIdealCoils=True, _ax=None):
+    """
+    You can track the progress of your calculation here:
+    http://webservices.ipp-hgw.mpg.de/docs/fieldlinetracer.html#introduction
+    """
+    import numpy as np
+    import matplotlib.pyplot as _plt
 
+    if useSymmetry:
+        gridSymmetry = 5
+    else:
+        gridSymmetry = 1
+    if config is None and configId is not None:
+        config = __makeConfigFromCurrents(_np.array([1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, ]), scale = 1.4e6,
+                                           useGrid = useGrid, gridSymmetry = gridSymmetry)
+        config.coilsIds = None
+        config.coilsIdsCurrents = None
+        config.configIds = [configId]
+    elif config is None and currents is not None:
+        currents = _np.asarray(currents)
+        config = __makeConfigFromCurrents(currents,
+                                          useGrid = useGrid, gridSymmetry = gridSymmetry,
+                                          useIdealCoils = useIdealCoils)
+    else:
+        raise RuntimeError("No valid config")
+    # end if
+
+    tracer = osa.Client('http://esb.ipp-hgw.mpg.de:8280/services/FieldLineProxy?wsdl')
+
+    pos = tracer.types.Points3D()
+    pos.x1 = np.linspace(Rstart, Rend, Rsteps)
+    pos.x2 = np.zeros(Rsteps)
+    pos.x3 = np.zeros(Rsteps)
+
+    # config = tracer.types.MagneticConfig()
+    # config.configIds = [configId]
+
+    poincare = tracer.types.PoincareInPhiPlane()
+    poincare.numPoints = numPoints
+    poincare.phi0 = [phi]
+
+    task = tracer.types.Task()
+    task.step = step
+    task.poincare = poincare
+
+    print('Starting the tracer')
+    res = tracer.service.trace(pos, config, task, None, None)
+
+    ''' number of PoincareSurface objets: 80'''
+    print(len(res.surfs))
+
+    print(''' plotting the points: ''')
+    if _ax is None:
+        hfig, _ax = _plt.subplots(1,1
+
+    for i in range(0, len(res.surfs)):
+        _plt.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="black", s=0.1)
+        # _plt.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="red", s=0.1)
+    _plt.gca().axis('equal')
+    _plt.xlabel('R [m]')
+    _plt.ylabel('Z [m]')
+    _plt.title('phi_ref=%4.3f degrees'%(phi*180.0/_np.pi,))
+    _plt.show()
+    return res, _ax
+# end def
+
+if __name__=="__main__":
+
+    # XPPROGID:20180927.016, w7x_ref_326 by currents / profiles group, w7x_ref_327 by beta
+    # currents:
+    # main coils: 13607, 13607, 13607, 13607, 13607, -5039, -5039
+    # trim coils: -114, -21, 101, 84, -49
+    currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
+
+    # phi0 = 0.0
+    phi0 = 6.3*_np.pi/180.0  # ECE
+    # phi0 = 170.5*_np.pi/180.0  # Thomson scattering
+    Poincare(phi=phi0, currents=currents)
+    # step = 0.2
+
+    # numPoints = 200
+    # sflux, xyz = makePoincarePlot(step, phi0, numPoints,
+    #                       startPoints = None,
+    #                       startRMin = 5.95, startRMax = 6.35,
+    #                       startPhi = 0.0,
+    #                       startZMin = 0, startZMax = 0,
+    #                       numStartPoints = 51,
+    #                       config = None, configId = None,
+    #                       currents = currents, useSymmetry=True,
+    #                       useGrid = True, useIdealCoils = True)
+# end if
