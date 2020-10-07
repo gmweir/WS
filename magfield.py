@@ -482,7 +482,7 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
         hfig = _plt.gcf()
     # end if
     for i in range(0, len(res.surfs)):
-        _ax.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="black", s=0.01)
+        _ax.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="black", s=0.05)
         # _ax.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="red", s=0.1)
 
     # _ax.axis('equal')
@@ -522,7 +522,10 @@ def quickplot_ECE(currents=None):
 
     # ========== Call the code and plot it =========== #
 
-    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000, Rstart=Rstart, Rend=Rend, Rsteps=Rsteps, _ax=_ax)
+    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000,
+                              Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
+                              useIdealCoils=True, _ax=_ax)
+                              # useIdealCoils=False, _ax=_ax)
     # _ax.plot(_np.asarray([_Rt,_Rs]), _np.asarray([z2, z1]), 'r-')
 
     _ax.set_ylim((-1.05, 1.1))
@@ -541,8 +544,8 @@ def quickplot_TS(currents=None):
     # ========== number of surfaces for finding islands? ========== #
     Rstart = 5.6
     Rend = 6.2
-    step_size = 0.001  # 600 surfaces
-    # step_size = 0.0066  # 90 surfaces
+    # step_size = 0.001  # 600 surfaces
+    step_size = 0.0066  # 90 surfaces
     Rsteps = int((Rend-Rstart)/step_size)
 
     # ========== toroidal angle for the diagnostic view =========== #
@@ -560,13 +563,18 @@ def quickplot_TS(currents=None):
     _phi0 = _np.arctan(y/x)
 
     # ===== Given:
-    phi0 = 170.5*_np.pi/180.0  # Thomson scattering
+    # phi0 = 171.455*_np.pi/180.0  # Thomson scattering
+    # phi0 = (27.2+144.255)*_np.pi/180.0  # Thomson scattering
+    phi0 = 27.2*_np.pi/180.0  # Thomson scattering
     # phi0 = -9.5*_np.pi/180.0  # Thomson scattering
 
     # ========== Call the code and plot it =========== #
 
-    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000, Rstart=Rstart, Rend=Rend, Rsteps=Rsteps, _ax=_ax)
-    _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([-z2, -z1]), 'r-')
+    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000,
+                              Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
+                              useIdealCoils=True, _ax=_ax)
+                              # useIdealCoils=False, _ax=_ax)
+    # _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([z2, z1]), 'r-')
 
     # _ax.set_ylim((-0.6, 0.9))
     # _ax.set_xlim((4.6, 6.1))
@@ -578,12 +586,15 @@ def quickplot_TS(currents=None):
 
 if __name__=="__main__":
 
+    # XPPROGID:20180927.015
+    currents = [13882, 13882, 13882, 13882, 13882, -7289, -7289]
 
     # XPPROGID:20180927.016, w7x_ref_326 by currents / profiles group, w7x_ref_327 by beta
     # currents:
     # main coils: 13607, 13607, 13607, 13607, 13607, -5039, -5039
     # trim coils: -114, -21, 101, 84, -49
-    currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
+    # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
+
     res1, hfig1, _ax1 = quickplot_ECE(currents=currents)
     res2, hfig2, _ax2 = quickplot_TS(currents=currents)
 
