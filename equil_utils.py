@@ -567,6 +567,8 @@ class VMECrest(VMEC_Struct):
     def getiota(self):
         if self.iota_grid is None:
             self.iota_grid = self.getgridiota()
+        if not hasattr(self, 'roa'):
+            self.roa = _np.copy(self.roa_grid)
         self.iota = _np.interp(self.roa, self.roa_grid, self.iota_grid)
         return self.iota
 
@@ -742,6 +744,50 @@ class VMECrest(VMEC_Struct):
         distance = _np.sqrt(_np.dot(dr,dr))
         return entryPoint,distance
     # end def Cross_LCMS
+
+    def fluxsurfaces(self, s, phi, Vid, N=256, disp=1, _ax=None, fmt='k-'):
+        '''
+        fluxsurfaces(s,phi,Vid,N=256,disp=0)
+        '''
+        if disp:
+            import matplotlib.pyplot as _plt
+            if _ax is None:
+                _plt.figure()
+                hfig, _ax = _plt.subplots(1,1)
+            # end if
+            else:
+                hfig = _plt.gcf()
+        # end if
+        s = _np.atleast_1d(s)
+        if isinstance(s,int):
+            nn = 1
+        else:
+            nn = len(s)
+            phi = _np.ones(nn)*phi
+        # end if
+
+        w = self.vmec.service.getFluxSurfaces(Vid, phi, s, N)
+        # w=VClient.service.getFluxSurfaces(Vid, phi*_np.pi/180.0, s, N)
+        R=_np.zeros((nn,N))
+        z=_np.zeros((nn,N))
+        for ii in range(nn):
+            if isinstance(w[ii].x1, list) and isinstance(w[ii].x2, list):
+                R1=_np.sqrt(_np.square(w[ii].x1) + _np.square(w[ii].x2))
+                z1=w[ii].x3
+            else:
+                R1=w[ii].x1
+                z1=w[ii].x3
+            # end if
+            if disp:            _ax.plot(R1,z1,fmt)        # end if
+            R[ii]=R1
+            z[ii]=z1
+        # end for
+        if disp:
+            _ax.axis('equal')
+            hfig.tight_layout()
+        # end if
+
+        return R, z
 
     # ===================================================================== #
     # ===================================================================== #
@@ -1239,44 +1285,65 @@ class w7xfield(Struct):
 
 
 if __name__ == '__main__':
-    currents = _np.array([12361.89994498,
-                          12362.92166191,
-                          12362.47447639,
-                          12363.31994178,
-                          12371.22082426,
-                          4817.01994068,
-                          4826.08753995], dtype=_np.float64)
-    equt = w7xfield(currents)
-#    equt.pickW7Xconfig()
-
-    fil = 'w7x_ref_82'
-    vmc = VMECrest(fil)
-    # vmc.getVMECgridDat()
-    # vmc_roa = vmc.getgridroa()
-    vmc_roa = vmc.roa_grid.copy()
-
-    vmc_dVdrho = vmc.dVdrho_grid.copy()
-    print(vmc.Vol_grid[-1])  # test volume normalization
-    print(_np.trapz(vmc.dVdrho_grid, x=vmc_roa))  # test jacobian of integral
-    print(vmc.Vol_lcfs)  # print estimate from webservices
-
-    cnfg = w7xCurrentEncoder(currents)
-    print(cnfg)
 
     import matplotlib.pyplot as _plt
-    _hfig = _plt.figure()
-    _ax1 = _plt.subplot(2, 1, 1)
-    _ax1.plot(vmc.roa_grid**2.0, vmc.dVdrho_grid)
-    # _ax1.set_xlabel(r'$\rho$')
-    _ax1.set_ylabel(r'$dV/d\rho[m^{-3}]$')
-#    _ax2 = _plt.subplot(3,1,2)
-#    _ax2.plot(vmc.roa_grid**2.0, vmc.Vol_grid)
-#    # _ax2.set_xlabel(r'$\rho$')
-#    _ax2.set_ylabel(r'Volume$[m^{-3}]$')
-    _ax3 = _plt.subplot(2, 1, 2)
-    _ax3.plot(vmc.roa_grid**2.0, vmc.Vol_grid)
-    _ax3.set_xlabel('s')
-    _ax3.set_ylabel(r'Volume$[m^{-3}]$')
+
+    _currents, fils = [], []
+    _currents.append([12362, 12364, 12363, 12363, 12371, 4817, 4828]) # XP20160302.008
+    fils.append(['w7x_ref_59']) # 8
+    _currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289]) # XP20180927.015
+    fils.append(['w7x_ref_358'])  # 15:   364
+    _currents.append([13045, 13044, 13045, 13045, 13045, -499, -499]) # XP20180927.050
+    fils.append(['w7x_ref_352'])  # 50
+
+    hiota, _ax = _plt.subplots(1,1, num='iota_scan')
+    hFS, _ax1 = _plt.subplots(1,1, num='flux_surfaces')
+
+    for cc, currents in enumerate(_currents):
+        currents = _np.asarray(currents, dtype=_np.float64)
+        equt = w7xfield(currents)
+        print(equt.configname+':')
+        print(equt.ratios)
+
+        vmc = VMECrest(fils[cc])
+        vmc.getiota()
+
+        cnfg = w7xCurrentEncoder(currents)
+        print(cnfg)
+
+        _ax.plot(vmc.roa_grid, vmc.iota)
+        _ax.set_ylim((0.7, 1.2))
+        _ax.set_xlim((0.0, 1.0))
+
+        vmc.fluxsurfaces(_np.asarray([0.001**2.0, 0.5**2.0, 1.0**2.0]), phi=0, Vid=fils[cc], N=256, disp=1, _ax=_ax1, fmt='k-')
+
+    # end for cc, currents in _currents
+    _ax.axhline(y=1.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=1.0)
+    _ax.axhline(y=5.0/10.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+
+    _ax.axhline(y=1.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+    _ax.axhline(y=2.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+    _ax.axhline(y=3.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+    _ax.axhline(y=4.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+    _ax.axhline(y=6.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+    _ax.axhline(y=7.0/5.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.5)
+
+    _ax.axhline(y=8.0/10.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.37)
+    _ax.axhline(y=9.0/10.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.37)
+    _ax.axhline(y=11.0/10.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.37)
+
+    _ax.axhline(y=5.0/6.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.25)
+    _ax.axhline(y=5.0/7.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.25)
+    _ax.axhline(y=5.0/8.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.25)
+    _ax.axhline(y=5.0/9.0, xmin=0.0, xmax=1.0, linestyle='--', color='k', linewidth=0.25)
+
+    _ax.set_xlabel(r'r/a')
+    _ax.set_ylabel(r'$\iota$')
+    hiota.tight_layout()
+
+    _ax1.set_xlabel('R [m]')
+    _ax1.set_ylabel('Z [m]')
+    hFS.tight_layout()
 # endif
 
 # ========================================================================== #
