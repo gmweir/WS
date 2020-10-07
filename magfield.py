@@ -30,9 +30,19 @@ __metaclass__ = type
 
 ###############################################################################
 
+
 import numpy as _np
+import matplotlib.pyplot as _plt
 import osa
 import copy
+
+_plt.rc('font', size=16)
+fig_size = _plt.rcParams["figure.figsize"]
+fig_size = (1.2*fig_size[0], 1.2*fig_size[1])
+figsize0 = _np.array([ 6.7, 4.775])
+figsize1 = _np.array([ 5.775, 5.975])
+figsize2 = (7.75, 6.0)
+fig_size_small = (6, 4.5)
 
 #__url = "http://lxpowerboz:88/services/cpp/FieldLine?wsdl"
 __url = "http://esb.ipp-hgw.mpg.de:8280/services/FieldLineProxy?wsdl"
@@ -420,8 +430,6 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
     You can track the progress of your calculation here:
     http://webservices.ipp-hgw.mpg.de/docs/fieldlinetracer.html#introduction
     """
-    import numpy as np
-    import matplotlib.pyplot as _plt
 
     if useSymmetry:
         gridSymmetry = 5
@@ -445,9 +453,9 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
     tracer = osa.Client('http://esb.ipp-hgw.mpg.de:8280/services/FieldLineProxy?wsdl')
 
     pos = tracer.types.Points3D()
-    pos.x1 = np.linspace(Rstart, Rend, Rsteps)
-    pos.x2 = np.zeros(Rsteps)
-    pos.x3 = np.zeros(Rsteps)
+    pos.x1 = _np.linspace(Rstart, Rend, Rsteps)
+    pos.x2 = _np.zeros(Rsteps)
+    pos.x3 = _np.zeros(Rsteps)
 
     # config = tracer.types.MagneticConfig()
     # config.configIds = [configId]
@@ -468,31 +476,120 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
 
     print(''' plotting the points: ''')
     if _ax is None:
-        hfig, _ax = _plt.subplots(1,1
-
+        hfig, _ax = _plt.subplots(1,1)
+    else:
+        _ax = _plt.gca()
+        hfig = _plt.gcf()
+    # end if
     for i in range(0, len(res.surfs)):
-        _plt.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="black", s=0.1)
-        # _plt.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="red", s=0.1)
-    _plt.gca().axis('equal')
-    _plt.xlabel('R [m]')
-    _plt.ylabel('Z [m]')
-    _plt.title('phi_ref=%4.3f degrees'%(phi*180.0/_np.pi,))
-    _plt.show()
-    return res, _ax
+        _ax.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="black", s=0.01)
+        # _ax.scatter(res.surfs[i].points.x1, res.surfs[i].points.x3, color="red", s=0.1)
+
+    # _ax.axis('equal')
+    _ax.set_xlabel('R [m]')
+    _ax.set_ylabel('Z [m]')
+    _ax.set_title('phi_ref=%4.3f degrees'%(phi*180.0/_np.pi,))
+    # _plt.show()
+    return res, hfig, _ax
 # end def
 
+def quickplot_ECE(currents=None):
+
+    # make a nicely sized figure for inspection of the ECE plot
+    hfig, _ax = _plt.subplots(1,1, num='ECE_poincare', figsize=(9 , 8.9))
+
+    # ========== number of surfaces for finding islands? ========== #
+    Rstart = 5.6
+    Rend = 6.2
+    # step_size = 0.001  # 600 surfaces
+    step_size = 0.0066  # 90 surfaces
+    Rsteps = int((Rend-Rstart)/step_size)
+
+    # ========== toroidal angle for the diagnostic view =========== #
+    #
+    x1, y1, z1 = -4.7311, -4.5719, 0.2723
+    x2, y2, z2 = -4.09251, -3.7044, 0.1503
+    x = 0.5*(x1+x2)
+    y = 0.5*(y1+y2)
+    z = 0.5*(z1+z2)
+    _Rs = _np.sqrt(x1**2.0+y1**2.0)
+    _Rt = _np.sqrt(x2**2.0+y2**2.0)
+
+    _phi0 = _np.arctan(y/x)
+
+    # ===== Given:
+    phi0 = 6.3*_np.pi/180.0  # ECE
+
+    # ========== Call the code and plot it =========== #
+
+    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000, Rstart=Rstart, Rend=Rend, Rsteps=Rsteps, _ax=_ax)
+    # _ax.plot(_np.asarray([_Rt,_Rs]), _np.asarray([z2, z1]), 'r-')
+
+    _ax.set_ylim((-1.05, 1.1))
+    # _ax.set_xlim((5.2, 6.2))
+    # _ax.axis('equal')
+    _ax.set_title('phi_ref=%2.1f degrees'%(phi0*180.0/_np.pi,))
+    # _ax.set_title('phi_ref=%4.3f degrees'%(_phi0*180.0/_np.pi,))
+    hfig.tight_layout()
+    return res, hfig, _ax
+
+def quickplot_TS(currents=None):
+
+    # make a nicely sized figure for inspection of the TS plot
+    hfig, _ax = _plt.subplots(1,1, num='TS_poincare', figsize=(12.3 , 9.1))
+
+    # ========== number of surfaces for finding islands? ========== #
+    Rstart = 5.6
+    Rend = 6.2
+    step_size = 0.001  # 600 surfaces
+    # step_size = 0.0066  # 90 surfaces
+    Rsteps = int((Rend-Rstart)/step_size)
+
+    # ========== toroidal angle for the diagnostic view =========== #
+
+    #
+    x1, y1, z1 = -0.914, -0.271, 1.604
+    u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
+    x2, y2, z2 = x1+1.0*u[0], y1+1.0*u[1], z1+1.0*u[2]
+
+    x = 0.5*(x1+x2)
+    y = 0.5*(y1+y2)
+    z = 0.5*(z1+z2)
+    _Rs = _np.sqrt(x1**2.0+y1**2.0)
+    _Rt = _np.sqrt(x2**2.0+y2**2.0)
+    _phi0 = _np.arctan(y/x)
+
+    # ===== Given:
+    phi0 = 170.5*_np.pi/180.0  # Thomson scattering
+    # phi0 = -9.5*_np.pi/180.0  # Thomson scattering
+
+    # ========== Call the code and plot it =========== #
+
+    res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000, Rstart=Rstart, Rend=Rend, Rsteps=Rsteps, _ax=_ax)
+    _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([-z2, -z1]), 'r-')
+
+    # _ax.set_ylim((-0.6, 0.9))
+    # _ax.set_xlim((4.6, 6.1))
+    # _ax.axis('equal')
+    _ax.set_title('phi_ref=%4.1f degrees'%(phi0*180.0/_np.pi,))
+    # _ax.set_title('phi_ref=%4.3f degrees'%(_phi0*180.0/_np.pi,))
+    hfig.tight_layout()
+    return res, hfig, _ax
+
 if __name__=="__main__":
+
 
     # XPPROGID:20180927.016, w7x_ref_326 by currents / profiles group, w7x_ref_327 by beta
     # currents:
     # main coils: 13607, 13607, 13607, 13607, 13607, -5039, -5039
     # trim coils: -114, -21, 101, 84, -49
     currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
+    res1, hfig1, _ax1 = quickplot_ECE(currents=currents)
+    res2, hfig2, _ax2 = quickplot_TS(currents=currents)
 
-    # phi0 = 0.0
-    phi0 = 6.3*_np.pi/180.0  # ECE
     # phi0 = 170.5*_np.pi/180.0  # Thomson scattering
-    Poincare(phi=phi0, currents=currents)
+    # res2, hfig2, _ax2 = Poincare(phi=phi0, currents=currents)
+
     # step = 0.2
 
     # numPoints = 200
