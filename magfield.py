@@ -534,6 +534,7 @@ def quickplot_ECE(currents=None):
     _ax.set_title('phi_ref=%2.1f degrees'%(phi0*180.0/_np.pi,))
     # _ax.set_title('phi_ref=%4.3f degrees'%(_phi0*180.0/_np.pi,))
     hfig.tight_layout()
+    _plt.show()
     return res, hfig, _ax
 
 def quickplot_TS(currents=None):
@@ -582,6 +583,7 @@ def quickplot_TS(currents=None):
     _ax.set_title('phi_ref=%4.1f degrees'%(phi0*180.0/_np.pi,))
     # _ax.set_title('phi_ref=%4.3f degrees'%(_phi0*180.0/_np.pi,))
     hfig.tight_layout()
+    _plt.show()
     return res, hfig, _ax
 
 if __name__=="__main__":
