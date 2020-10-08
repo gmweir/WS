@@ -425,7 +425,7 @@ def makePoincarePlot(step, phi0, numPoints,
     return _np.array(out1), _np.array(out2), res
 
 def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=80, step=0.2,
-             useSymmetry=True, config=None, currents=None, useGrid=True, useIdealCoils=True, _ax=None):
+             useSymmetry=True, config=None, currents=None, useGrid=True, useIdealCoils=True, _ax=None, iota_out=False):
     """
     You can track the progress of your calculation here:
     http://webservices.ipp-hgw.mpg.de/docs/fieldlinetracer.html#introduction
@@ -468,6 +468,28 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
     task.step = step
     task.poincare = poincare
 
+    if iota_out:
+        print('including a calculation of magnetic characteristics: iota. \nThis will slow down the calculation: check flag iota_out')
+        print('.... note, the tracer is not returning any info yet!')
+        # calculate iota as well
+        MagChar = tracer.types.MagneticCharacteristics()
+        # MagChar.iotaAccuracy = 0.01
+        # MagChar.iotaSteps = 50000000
+#
+        axis = tracer.types.AxisSettings()
+        # axis.prefferedPhi = 0.628319
+        # axis.reffNumPoints = 10.0
+        # axis.toroidalPeriod = 5
+        # axis.axisInitX = 5.95
+        # axis.axisInitY = 0.0
+        # axis.axisInitZ = 0.0
+        # axis.axisAccuracy = 0.0001
+        # MagChar.axisSettings = axis
+
+        task.characteristics = MagChar
+        task.characteristics.axisSettings = axis
+    # end if
+
     print('Starting the tracer')
     res = tracer.service.trace(pos, config, task, None, None)
 
@@ -493,7 +515,7 @@ def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=8
     return res, hfig, _ax
 # end def
 
-def quickplot_ECE(currents=None):
+def quickplot_ECE(currents=None, iota_out=False):
 
     # make a nicely sized figure for inspection of the ECE plot
     hfig, _ax = _plt.subplots(1,1, num='ECE_poincare', figsize=(9 , 8.9))
@@ -524,7 +546,7 @@ def quickplot_ECE(currents=None):
 
     res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
-                              useIdealCoils=True, _ax=_ax)
+                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
                               # useIdealCoils=False, _ax=_ax)
     # _ax.plot(_np.asarray([_Rt,_Rs]), _np.asarray([z2, z1]), 'r-')
 
@@ -535,9 +557,10 @@ def quickplot_ECE(currents=None):
     # _ax.set_title('phi_ref=%4.3f degrees'%(_phi0*180.0/_np.pi,))
     hfig.tight_layout()
     _plt.show()
+
     return res, hfig, _ax
 
-def quickplot_TS(currents=None):
+def quickplot_TS(currents=None, iota_out=False):
 
     # make a nicely sized figure for inspection of the TS plot
     hfig, _ax = _plt.subplots(1,1, num='TS_poincare', figsize=(12.3 , 9.1))
@@ -573,7 +596,7 @@ def quickplot_TS(currents=None):
 
     res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
-                              useIdealCoils=True, _ax=_ax)
+                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
                               # useIdealCoils=False, _ax=_ax)
     # _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([z2, z1]), 'r-')
 
@@ -597,8 +620,22 @@ if __name__=="__main__":
     # trim coils: -114, -21, 101, 84, -49
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
+    # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
     res1, hfig1, _ax1 = quickplot_ECE(currents=currents)
     res2, hfig2, _ax2 = quickplot_TS(currents=currents)
+
+    # if res1.characteristics is not None:
+    #     hiota, axs = _plt.subplots(2,1, num='iota_scan')
+    #     axi1, axi2 = tuple(axs)
+
+    #     for ii in range(0, len(res1.surfs)):
+    #         axi1.plot(res1.characteristics[ii].reff, res1.characteristics[ii].iota,'-')
+    #         axi2.plot(res1.characteristics[ii].reff, res1.characteristics[ii].diota,'-')
+    #     # end for
+    #     axi1.set_ylabel(r'$\iota$')
+    #     axi2.set_ylabel(r'$d\iota$/dr$_{eff}$ [m$^{-1}]')
+    #     axi2.set_xlabel(r'r$_{eff}$ [m]')
+    #     hiota.tight_layout()
 
     # phi0 = 170.5*_np.pi/180.0  # Thomson scattering
     # res2, hfig2, _ax2 = Poincare(phi=phi0, currents=currents)
