@@ -570,7 +570,8 @@ def quickplot_Poincare(currents, phi=0.0, iota_out=False, _ax=None, useIdealCoil
 
     # ========== Call the code and plot it =========== #
 
-    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=5000,
+#    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=5000,
+    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=1000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
                               useIdealCoils=False, _ax=_ax, iota_out=iota_out)
 #                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
