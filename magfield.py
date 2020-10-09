@@ -611,8 +611,17 @@ def quickplot_TS(currents=None, iota_out=False):
 
 if __name__=="__main__":
 
+    try:
+        from .equil_utils import VMECrest
+    except:
+        from WS.equil_utils import VMECrest
+    # end try
+
+    fils = []
+    currents = []
     # XPPROGID:20180927.015
-    currents = [13882, 13882, 13882, 13882, 13882, -7289, -7289]
+    currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289])
+    fils.append(['w7x_ref_358'])  # 15:   364
 
     # XPPROGID:20180927.016, w7x_ref_326 by currents / profiles group, w7x_ref_327 by beta
     # currents:
@@ -621,8 +630,16 @@ if __name__=="__main__":
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
     # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
-    res1, hfig1, _ax1 = quickplot_ECE(currents=currents)
-    res2, hfig2, _ax2 = quickplot_TS(currents=currents)
+    res1, hfig1, _ax1 = quickplot_ECE(currents=currents[0])
+    res2, hfig2, _ax2 = quickplot_TS(currents=currents[0])
+
+    vmc = VMECrest(fils[0])
+    #ECE plot first
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=6.3*_np.pi/180.0, Vid=fils[0], _ax=_ax1, fmt='r--')
+
+    #TS plot second
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=27.2*_np.pi/180.0, Vid=fils[0], _ax=_ax2, fmt='r--')
+
 
     # if res1.characteristics is not None:
     #     hiota, axs = _plt.subplots(2,1, num='iota_scan')
