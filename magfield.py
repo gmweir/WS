@@ -57,12 +57,12 @@ __ideal_db_coils =  [160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170,
                      215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225,
                      226, 227, 228, 229]
 __asbuilt_db_coils = range(522, 592)
-#__asbuilt_db_coils_EMload = range(1152, 1222)   # op11
-__asbuilt_db_coils_EMload = range(2272, 2342)   # 2018
+__asbuilt_db_coils_EMload = range(1152, 1222)   # op11
+#__asbuilt_db_coils_EMload = range(2272, 2342)   # 2018
 
 def __makeConfigFromCurrents(currents, scale=1.0, useGrid=False,
                              gridSymmetry=5, coils=None,
-                             useIdealCoils=False, withEMload=True):
+                             useIdealCoils=False, withEMload=False):
     """
         Create magnetic configuration object, given currents.
     """
