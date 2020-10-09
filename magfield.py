@@ -630,21 +630,22 @@ if __name__=="__main__":
     # ECE
     x1ece, y1ece, z1ece = -4.7311, -4.5719, 0.2723
     x2ece, y2ece, z2ece = -4.09251, -3.7044, 0.1503
-    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)
-    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)
     phiece = 6.3*_np.pi/180.0  # ECE
+
+    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)*_np.cos(phiece-_np.arctan(y1ece/x1ece))
+    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)*_np.cos(phiece-_np.arctan(y2ece/x2ece))
 
     # Thomson
     x1ts, y1ts, z1ts = -0.914, -0.271, 1.604
     u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
     x2ts, y2ts, z2ts = x1ts+1.0*u[0], y1ts+1.0*u[1], z1ts+1.0*u[2]
 
-    _Rsts = _np.sqrt(x1ts**2.0+y1ts**2.0)
-    _Rtts = _np.sqrt(x2ts**2.0+y2ts**2.0)
-
     # phits = 171.455*_np.pi/180.0  # Thomson scattering
     phits = (27.2+144.255)*_np.pi/180.0  # Thomson scattering
 #    phits = 27.2*_np.pi/180.0  # Thomson scattering
+
+    _Rsts = _np.sqrt(x1ts**2.0+y1ts**2.0)*_np.cos(phits-_np.arctan(y1ts/x1ts))
+    _Rtts = _np.sqrt(x2ts**2.0+y2ts**2.0)*_np.cos(phits-_np.arctan(y2ts/x2ts))
 
     res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[phiece,phits], iota_out=False, _ax=[_ax1,_ax2], useIdealCoils=False)
     hfig1, hfig2 = tuple(hfig)
@@ -652,9 +653,9 @@ if __name__=="__main__":
     _ax1.plot(_np.asarray([_Rtece,_Rsece]), _np.asarray([z2ece, z1ece]), 'r-')
     _ax2.plot(_np.asarray([_Rtts,_Rsts]), _np.asarray([z2ts, z1ts]), 'r-')
 
-    # resest ECE limits
-    _ax1.set_ylim((-1.1, 1.1))
-    _ax1.set_xlim((5.15, 6.35))
+#    # resest ECE limits
+#    _ax1.set_ylim((-1.1, 1.1))
+#    _ax1.set_xlim((5.15, 6.35))
 
     # plot the flux-surfaces
     vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=phiece, Vid=fils[0], _ax=_ax1, fmt='r--')
