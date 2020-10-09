@@ -633,8 +633,8 @@ if __name__=="__main__":
     x2ece, y2ece, z2ece = -4.09251, -3.7044, 0.1503
     phiece = 6.3*_np.pi/180.0  # ECE
 
-    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)*_np.cos(phiece-_np.arctan(y1ece/x1ece))
-    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)*_np.cos(phiece-_np.arctan(y2ece/x2ece))
+    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)
+    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)
 
     # Thomson
     x1ts, y1ts, z1ts = -0.914, -0.271, 1.604
@@ -651,8 +651,8 @@ if __name__=="__main__":
     res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[phiece,phits], iota_out=False, _ax=[_ax1,_ax2], useIdealCoils=False)
     hfig1, hfig2 = tuple(hfig)
     _ax1, _ax2 = tuple(_ax)
-    _ax1.plot(_np.asarray([_Rtece,_Rsece]), _np.asarray([z2ece, z1ece]), 'r-')
-    _ax2.plot(_np.asarray([_Rtts,_Rsts]), _np.asarray([z2ts, z1ts]), 'r-')
+#    _ax1.plot(_np.asarray([_Rtece,_Rsece]), _np.asarray([z2ece, z1ece]), 'r-')
+#    _ax2.plot(_np.asarray([_Rtts,_Rsts]), _np.asarray([z2ts, z1ts]), 'r-')
 
 #    # resest ECE limits
 #    _ax1.set_ylim((-1.1, 1.1))
