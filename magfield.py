@@ -425,7 +425,7 @@ def makePoincarePlot(step, phi0, numPoints,
 
     return _np.array(out1), _np.array(out2), res
 
-def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=80, step=0.2,
+def Poincare(phi=0.0, configId=15, numPoints=200, Rstart=5.6, Rend=6.2, Rsteps=80, step=0.01,
              useSymmetry=True, config=None, currents=None, useGrid=True, useIdealCoils=True, _ax=None, iota_out=False):
     """
     You can track the progress of your calculation here:
@@ -531,8 +531,8 @@ def quickplot_Poincare(currents=None, phi=0.0, iota_out=False, _ax=None, useIdea
 #    Rend = 6.35
     Rend = 6.2
     # step_size = 0.001  # 600 surfaces
-#    step_size = 0.0066  # 90 surfaces
-    step_size = 0.01  # 60 surfaces
+    step_size = 0.0066  # 90 surfaces
+#    step_size = 0.01  # 60 surfaces
     Rsteps = int((Rend-Rstart)/step_size)
 
     # ========== Call the code and plot it =========== #
@@ -558,8 +558,8 @@ def quickplot_ECE(currents=None, iota_out=False):
     Rstart = 5.6
     Rend = 6.2
     # step_size = 0.001  # 600 surfaces
-#    step_size = 0.0066  # 90 surfaces
-    step_size = 0.01  # 60 surfaces
+    step_size = 0.0066  # 90 surfaces
+#    step_size = 0.01  # 60 surfaces
     Rsteps = int((Rend-Rstart)/step_size)
 
 
@@ -657,12 +657,13 @@ if __name__=="__main__":
 
     fils = []
     currents = []
-    # XPPROGID:20180927.015
-    currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289])
-#    currents.append([1000, 1000, 1000, 1000, 1000, -525, -525])
 
 #    currents.append([1000, 1000, 1000, 1000, 1000, -525, -525])
-    fils.append(['w7x_ref_364'])  # 15:   358, 364
+#    currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289])     # XPPROGID:20180927.015
+#    fils.append(['w7x_ref_364'])  # 15:   358, 364
+
+    currents.append([13607, 13607, 13607, 13607, 13607, -5039, -5039]) # XP20180927.016
+    fils.append(['w7x_ref_326'])  # 16:   327, 326
 
 #    vmc = VMECrest(fils[0])
     vmc = VMECrest(fils[0], realcurrents=currents[0])
@@ -674,14 +675,14 @@ if __name__=="__main__":
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
     # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
-    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
-    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
-    _ax.set_xlim((5.15, 6.35))
-    _ax.set_ylim((-1.1, 1.1))
-    hfig.tight_layout()
-
-    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
-    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
+#    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
+#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
+#    _ax.set_xlim((5.15, 6.35))
+#    _ax.set_ylim((-1.1, 1.1))
+#    hfig.tight_layout()
+#
+#    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
+#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
 
     # ECE plot first
     res1, hfig1, _ax1 = quickplot_ECE(currents=currents[0])
@@ -709,7 +710,7 @@ if __name__=="__main__":
     # phi0 = 170.5*_np.pi/180.0  # Thomson scattering
     # res2, hfig2, _ax2 = Poincare(phi=phi0, currents=currents)
 
-    # step = 0.2
+    # step = 0.01
 
     # numPoints = 200
     # sflux, xyz = makePoincarePlot(step, phi0, numPoints,
