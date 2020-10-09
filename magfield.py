@@ -537,7 +537,7 @@ def quickplot_Poincare(currents=None, phi=0.0, iota_out=False, _ax=None, useIdea
 
     # ========== Call the code and plot it =========== #
 
-    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=1000,
+    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=5000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
                               useIdealCoils=False, _ax=_ax, iota_out=iota_out)
 #                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
@@ -564,16 +564,16 @@ def quickplot_ECE(currents=None, iota_out=False):
 
 
     # ========== toroidal angle for the diagnostic view =========== #
-    #
-#    x1, y1, z1 = -4.7311, -4.5719, 0.2723
-#    x2, y2, z2 = -4.09251, -3.7044, 0.1503
-#    x = 0.5*(x1+x2)
-#    y = 0.5*(y1+y2)
-#    z = 0.5*(z1+z2)
-#    _Rs = _np.sqrt(x1**2.0+y1**2.0)
-#    _Rt = _np.sqrt(x2**2.0+y2**2.0)
-#
-#    _phi0 = _np.arctan(y/x)
+
+    x1, y1, z1 = -4.7311, -4.5719, 0.2723
+    x2, y2, z2 = -4.09251, -3.7044, 0.1503
+    x = 0.5*(x1+x2)
+    y = 0.5*(y1+y2)
+    z = 0.5*(z1+z2)
+    _Rs = _np.sqrt(x1**2.0+y1**2.0)
+    _Rt = _np.sqrt(x2**2.0+y2**2.0)
+
+    _phi0 = _np.arctan(y/x)
 
     # ===== Given:
     phi0 = 6.3*_np.pi/180.0  # ECE
@@ -582,11 +582,11 @@ def quickplot_ECE(currents=None, iota_out=False):
 
     res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=1000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
-                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
-#                              useIdealCoils=False, _ax=_ax, iota_out=iota_out)
+                              useIdealCoils=False, _ax=_ax, iota_out=iota_out)
+#                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
 
-    res, hfig, _ax = quickplot_Poincare(currents=currents, phi=phi0, iota_out=iota_out, _ax=_ax)
-    # _ax.plot(_np.asarray([_Rt,_Rs]), _np.asarray([z2, z1]), 'r-')
+#    res, hfig, _ax = quickplot_Poincare(currents=currents, phi=phi0, iota_out=iota_out, _ax=_ax)
+    _ax.plot(_np.asarray([_Rt,_Rs]), _np.asarray([z2, z1]), 'r-')
 
     _ax.set_ylim((-1.1, 1.1))
     _ax.set_xlim((5.15, 6.35))
@@ -611,17 +611,17 @@ def quickplot_TS(currents=None, iota_out=False):
     Rsteps = int((Rend-Rstart)/step_size)
 
     # ========== toroidal angle for the diagnostic view =========== #
-#    #
-#    x1, y1, z1 = -0.914, -0.271, 1.604
-#    u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
-#    x2, y2, z2 = x1+1.0*u[0], y1+1.0*u[1], z1+1.0*u[2]
-#
-#    x = 0.5*(x1+x2)
-#    y = 0.5*(y1+y2)
-#    z = 0.5*(z1+z2)
-#    _Rs = _np.sqrt(x1**2.0+y1**2.0)
-#    _Rt = _np.sqrt(x2**2.0+y2**2.0)
-#    _phi0 = _np.arctan(y/x)
+    #
+    x1, y1, z1 = -0.914, -0.271, 1.604
+    u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
+    x2, y2, z2 = x1+1.0*u[0], y1+1.0*u[1], z1+1.0*u[2]
+
+    x = 0.5*(x1+x2)
+    y = 0.5*(y1+y2)
+    z = 0.5*(z1+z2)
+    _Rs = _np.sqrt(x1**2.0+y1**2.0)
+    _Rt = _np.sqrt(x2**2.0+y2**2.0)
+    _phi0 = _np.arctan(y/x)
 
     # ===== Given:
     # phi0 = 171.455*_np.pi/180.0  # Thomson scattering
@@ -633,10 +633,10 @@ def quickplot_TS(currents=None, iota_out=False):
 
     res, hfig, _ax = Poincare(phi=phi0, currents=currents, numPoints=5000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
-                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
-#                              useIdealCoils=False, _ax=_ax, iota_out=iota_out)
+                              useIdealCoils=False, _ax=_ax, iota_out=iota_out)
+#                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
 
-    # _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([z2, z1]), 'r-')
+    _ax.plot(_np.asarray([-_Rt,-_Rs]), _np.asarray([z2, z1]), 'r-')
 
     # _ax.set_ylim((-0.6, 0.9))
     # _ax.set_xlim((4.6, 6.1))
@@ -675,14 +675,14 @@ if __name__=="__main__":
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
     # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
-#    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
-#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
-#    _ax.set_xlim((5.15, 6.35))
-#    _ax.set_ylim((-1.1, 1.1))
-#    hfig.tight_layout()
-#
-#    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
-#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
+    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
+    _ax.set_xlim((5.15, 6.35))
+    _ax.set_ylim((-1.1, 1.1))
+    hfig.tight_layout()
+
+    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
 
     # ECE plot first
     res1, hfig1, _ax1 = quickplot_ECE(currents=currents[0])
