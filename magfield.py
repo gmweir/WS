@@ -607,21 +607,20 @@ if __name__=="__main__":
     # trim coils: -114, -21, 101, 84, -49
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
-##    # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
-#    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[0.0,2.0*_np.pi/10.0], iota_out=False, _ax=None, useIdealCoils=False, figsize=[(5.25 , 9.1), (12.3 , 9.1)])
-##    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
-##
-##    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
-#
-#    hfig, hfig3 = tuple(hfig)
-#    _ax, _ax3 = tuple(_ax)
-#    _ax.set_xlim((5.15, 6.35))
-#    _ax.set_ylim((-1.1, 1.1))
-#
-#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
-#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
-#    hfig.tight_layout()
-#    hfig3.tight_layout()
+#    # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
+    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[0.0,2.0*_np.pi/10.0], iota_out=False, _ax=None, useIdealCoils=False, figsize=[(5.25 , 9.1), (12.3 , 9.1)])
+#    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
+#    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
+
+    hfig, hfig3 = tuple(hfig)
+    _ax, _ax3 = tuple(_ax)
+    _ax.set_xlim((5.15, 6.35))
+    _ax.set_ylim((-1.1, 1.1))
+
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=0.0*_np.pi/180.0, Vid=fils[0], _ax=_ax, fmt='r--')
+    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=2.0*_np.pi/10.0, Vid=fils[0], _ax=_ax3, fmt='r--')
+    hfig.tight_layout()
+    hfig3.tight_layout()
 
     # make a nicely sized figure for inspection of the ECE plot and TS plots
     hfig1, _ax1 = _plt.subplots(1,1, num='ECE_poincare', figsize=(5.25 , 9.1))
