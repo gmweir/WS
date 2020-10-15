@@ -539,14 +539,14 @@ def __Poincare_plotter(res, axs=None):
     return res, hfigs, _axs
 # end def __Poincare_plotter
 
-def quickplot_Poincare(currents, phi=0.0, iota_out=False, _ax=None, useIdealCoils=True, figsize=(12.3 , 9.1)):
+def quickplot_Poincare(currents, phi=0.0, iota_out=False, _ax=None, useIdealCoils=True, figsize=(12.3 , 9.1), Rsettings=None):
     cstring = _np.asarray(1000*_np.asarray(currents[1:])/currents[0], dtype=int)
     cstring = "%4i_%4i_%4i_%4i_%4i_%4i"%(cstring[0], cstring[1], cstring[2], cstring[3], cstring[4], cstring[5])
 
     phi = _np.atleast_1d(phi)
     if _ax is None:
         hfigs = []
-        _axs = []
+        _ax = []
         for ii in range(len(phi)):
             figsize = _np.atleast_2d(figsize)
             if _np.shape(figsize)[0] == 1:
@@ -555,25 +555,29 @@ def quickplot_Poincare(currents, phi=0.0, iota_out=False, _ax=None, useIdealCoil
                 _hfig, _ax_ = _plt.subplots(1,1, num='poincare_phi_%3i_deg_%s'%(int(phi[ii]*180/_np.pi),cstring), figsize=tuple(figsize[ii]))
             # end if
             hfigs.append(_hfig)
-            _axs.append(_ax_)
+            _ax.append(_ax_)
 #            hfig, _ax = _plt.subplots(1,1, num='poincare_phi_%3i_deg_%s'%(int(phi*180/_np.pi),cstring), figsize=figsize)
         # end for
     # end if
     # ========== number of surfaces for finding islands? ========== #
-    Rstart = 5.6
-#    Rend = 6.35
-    Rend = 6.2
-    # step_size = 0.001  # 600 surfaces
-    step_size = 0.0066  # 90 surfaces
-#    step_size = 0.01  # 60 surfaces
-    Rsteps = int((Rend-Rstart)/step_size)
+    if Rsettings is None:
+        Rstart = 5.6
+    #    Rend = 6.35
+        Rend = 6.2
+        # step_size = 0.001  # 600 surfaces
+        step_size = 0.0066  # 90 surfaces
+    #    step_size = 0.01  # 60 surfaces
+        Rsteps = int((Rend-Rstart)/step_size)
+    else:
+        Rstart, Rend, Rsteps = tuple(Rsettings)
+    # end if
 
     # ========== Call the code and plot it =========== #
 
 #    res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=5000,
     res, hfig, _ax = Poincare(phi=phi, currents=currents, numPoints=1000,
                               Rstart=Rstart, Rend=Rend, Rsteps=Rsteps,
-                              useIdealCoils=False, _ax=_ax, iota_out=iota_out)
+                              useIdealCoils=useIdealCoils, _ax=_ax, iota_out=iota_out)
 #                              useIdealCoils=True, _ax=_ax, iota_out=iota_out)
     _plt.show()
     return res, hfig, _ax
@@ -591,12 +595,16 @@ if __name__=="__main__":
     fils = []
     currents = []
 
+#    currents.append([12362, 12364, 12363, 12363, 12371, 4817, 4828])   # XP:20160302.008
+#    fils.append(['w7x_ref_59']) # 8
+
 #    currents.append([1000, 1000, 1000, 1000, 1000, -525, -525])
-#    currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289])     # XPPROGID:20180927.015
+    currents.append([13882, 13882, 13882, 13882, 13882, -7289, -7289])     # XPPROGID:20180927.015
+    fils.append(['w7x_ref_358'])  # 15:   358, 364
 #    fils.append(['w7x_ref_364'])  # 15:   358, 364
 
-    currents.append([13607, 13607, 13607, 13607, 13607, -5039, -5039]) # XP20180927.016
-    fils.append(['w7x_ref_326'])  # 16:   327, 326
+#    currents.append([13607, 13607, 13607, 13607, 13607, -5039, -5039]) # XP20180927.016
+#    fils.append(['w7x_ref_326'])  # 16:   327, 326
 
 #    vmc = VMECrest(fils[0])
     vmc = VMECrest(fils[0], realcurrents=currents[0])
@@ -607,10 +615,7 @@ if __name__=="__main__":
     # trim coils: -114, -21, 101, 84, -49
     # currents = [13607, 13607, 13607, 13607, 13607, -5039, -5039]
 
-#    # the iota_out flag is not working yet... field line tracer not returning magnetic characteristics
     res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[0.0,2.0*_np.pi/10.0], iota_out=False, _ax=None, useIdealCoils=False, figsize=[(5.25 , 9.1), (12.3 , 9.1)])
-#    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=0.0, iota_out=False, _ax=None, useIdealCoils=False, figsize=(5.25 , 9.1))
-#    res3, hfig3, _ax3 = quickplot_Poincare(currents=currents[0], phi=2.0*_np.pi/10.0, iota_out=False, _ax=None, useIdealCoils=False)
 
     hfig, hfig3 = tuple(hfig)
     _ax, _ax3 = tuple(_ax)
@@ -622,61 +627,62 @@ if __name__=="__main__":
     hfig.tight_layout()
     hfig3.tight_layout()
 
-    # make a nicely sized figure for inspection of the ECE plot and TS plots
-    hfig1, _ax1 = _plt.subplots(1,1, num='ECE_poincare', figsize=(5.25 , 9.1))
-    hfig2, _ax2 = _plt.subplots(1,1, num='TS_poincare', figsize=(12.3 , 9.1))
+#    # ========== diagnostic specific views =========== #
+#    # make a nicely sized figure for inspection of the ECE plot and TS plots
+#    hfig1, _ax1 = _plt.subplots(1,1, num='ECE_poincare', figsize=(5.25 , 9.1))
+#    hfig2, _ax2 = _plt.subplots(1,1, num='TS_poincare', figsize=(12.3 , 9.1))
 
-    # ========== toroidal angle for the diagnostic view =========== #
-    # ECE
-    x1ece, y1ece, z1ece = -4.7311, -4.5719, 0.2723
-    x2ece, y2ece, z2ece = -4.09251, -3.7044, 0.1503
-    phiece = 6.3*_np.pi/180.0  # ECE
+#    # ========== toroidal angle for the diagnostic view =========== #
+#    # ECE
+#    x1ece, y1ece, z1ece = -4.7311, -4.5719, 0.2723
+#    x2ece, y2ece, z2ece = -4.09251, -3.7044, 0.1503
+#    phiece = 6.3*_np.pi/180.0  # ECE
+#
+#    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)
+#    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)
+#
+#    # Thomson
+#    x1ts, y1ts, z1ts = -0.914, -0.271, 1.604
+#    u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
+#    x2ts, y2ts, z2ts = x1ts+1.0*u[0], y1ts+1.0*u[1], z1ts+1.0*u[2]
+#
+#    # phits = 171.455*_np.pi/180.0  # Thomson scattering
+#    phits = (27.2+144.255)*_np.pi/180.0  # Thomson scattering
+##    phits = 27.2*_np.pi/180.0  # Thomson scattering
+#
+#    _Rsts = _np.sqrt(x1ts**2.0+y1ts**2.0)*_np.cos(phits-_np.arctan(y1ts/x1ts))
+#    _Rtts = _np.sqrt(x2ts**2.0+y2ts**2.0)*_np.cos(phits-_np.arctan(y2ts/x2ts))
 
-    _Rsece = _np.sqrt(x1ece**2.0+y1ece**2.0)
-    _Rtece = _np.sqrt(x2ece**2.0+y2ece**2.0)
-
-    # Thomson
-    x1ts, y1ts, z1ts = -0.914, -0.271, 1.604
-    u = [-7.729, 1.924, -2.514]  # from u=0, 1 from AEZ31 to AET31
-    x2ts, y2ts, z2ts = x1ts+1.0*u[0], y1ts+1.0*u[1], z1ts+1.0*u[2]
-
-    # phits = 171.455*_np.pi/180.0  # Thomson scattering
-    phits = (27.2+144.255)*_np.pi/180.0  # Thomson scattering
-#    phits = 27.2*_np.pi/180.0  # Thomson scattering
-
-    _Rsts = _np.sqrt(x1ts**2.0+y1ts**2.0)*_np.cos(phits-_np.arctan(y1ts/x1ts))
-    _Rtts = _np.sqrt(x2ts**2.0+y2ts**2.0)*_np.cos(phits-_np.arctan(y2ts/x2ts))
-
-    res, hfig, _ax = quickplot_Poincare(currents=currents[0], phi=[phiece,phits], iota_out=False, _ax=[_ax1,_ax2], useIdealCoils=False)
-    hfig1, hfig2 = tuple(hfig)
-    _ax1, _ax2 = tuple(_ax)
-#    _ax1.plot(_np.asarray([_Rtece,_Rsece]), _np.asarray([z2ece, z1ece]), 'r-')
-#    _ax2.plot(_np.asarray([_Rtts,_Rsts]), _np.asarray([z2ts, z1ts]), 'r-')
-
+#    res1, _hfig, _ax_ = quickplot_Poincare(currents=currents[0], phi=[phiece,phits], iota_out=False, _ax=[_ax1,_ax2], useIdealCoils=False)
+#    hfig1, hfig2 = tuple(_hfig)
+#    _ax1, _ax2 = tuple(_ax_)
+##    _ax1.plot(_np.asarray([_Rtece,_Rsece]), _np.asarray([z2ece, z1ece]), 'r-')
+##    _ax2.plot(_np.asarray([_Rtts,_Rsts]), _np.asarray([z2ts, z1ts]), 'r-')
+##
 #    # resest ECE limits
 #    _ax1.set_ylim((-1.1, 1.1))
 #    _ax1.set_xlim((5.15, 6.35))
-
-    # plot the flux-surfaces
-    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=phiece, Vid=fils[0], _ax=_ax1, fmt='r--')
-    hfig1.tight_layout()
-
-    #TS plot second
-    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=phits, Vid=fils[0], _ax=_ax2, fmt='r--')
-    hfig2.tight_layout()
-
-    # if res1.characteristics is not None:
-    #     hiota, axs = _plt.subplots(2,1, num='iota_scan')
-    #     axi1, axi2 = tuple(axs)
-
-    #     for ii in range(0, len(res1.surfs)):
-    #         axi1.plot(res1.characteristics[ii].reff, res1.characteristics[ii].iota,'-')
-    #         axi2.plot(res1.characteristics[ii].reff, res1.characteristics[ii].diota,'-')
-    #     # end for
-    #     axi1.set_ylabel(r'$\iota$')
-    #     axi2.set_ylabel(r'$d\iota$/dr$_{eff}$ [m$^{-1}]')
-    #     axi2.set_xlabel(r'r$_{eff}$ [m]')
-    #     hiota.tight_layout()
+##
+#    # plot the flux-surfaces
+#    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=phiece, Vid=fils[0], _ax=_ax1, fmt='r--')
+#    hfig1.tight_layout()
+#
+##    #TS plot second
+##    vmc.fluxsurfaces(_np.asarray([0.5**2.0, 1.0**2.0]), phi=phits, Vid=fils[0], _ax=_ax2, fmt='r--')
+##    hfig2.tight_layout()
+#
+#    if res1.characteristics is not None:
+#         hiota, axs = _plt.subplots(2,1, num='iota_scan')
+#         axi1, axi2 = tuple(axs)
+#
+#         for ii in range(0, len(res1.surfs)):
+#             axi1.plot(res1.characteristics[ii].reff, res1.characteristics[ii].iota,'-')
+#             axi2.plot(res1.characteristics[ii].reff, res1.characteristics[ii].diota,'-')
+#         # end for
+#         axi1.set_ylabel(r'$\iota$')
+#         axi2.set_ylabel(r'$d\iota$/dr$_{eff}$ [m$^{-1}]')
+#         axi2.set_xlabel(r'r$_{eff}$ [m]')
+#         hiota.tight_layout()
 
     # phi0 = 170.5*_np.pi/180.0  # Thomson scattering
     # res2, hfig2, _ax2 = Poincare(phi=phi0, currents=currents)
