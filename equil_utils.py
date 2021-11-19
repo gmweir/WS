@@ -32,6 +32,11 @@ except:
 
 __metaclass__ = type
 
+import platform
+import subprocess
+# import zeep
+
+
 # ========================================================================== #
 # ========================================================================== #
 
@@ -1284,8 +1289,71 @@ class w7xfield(Struct):
 # ========================================================================== #
 
 
-if __name__ == '__main__':
+def connection():
+    # connect to VMEC webservice
+    if platform.system().lower() == 'windows':
+        count_str = '-n'
+        timeout_str = '-w'
+    else:
+        count_str = '-c'
+        timeout_str = '-t'
+    ping = subprocess.run(f'ping {count_str} 1 {timeout_str} 2 esb.ipp-hgw.mpg.de'.split(' '),
+                          capture_output=True)
+    ping.check_returncode()
+    connection_url = "http://esb.ipp-hgw.mpg.de:8280/services/vmec_v5?wsdl"
+    # return zeep.Client(connection_url)
+    return _cl(connection_url)
 
+def write_wout_nc(eqtag='w7x_ref_9'):
+    vmec = connection()
+    wout_nc = vmec.service.getVmecOutputNetcdf(eqtag)
+    wout_nc_file = open('wout.nc', 'wb')
+    wout_nc_file.write(wout_nc)
+    wout_nc_file.close()
+
+
+def test_connection():
+    import matplotlib.pyplot as _plt
+
+    _plt.close('all')
+
+    vmec = connection()
+
+    s = [0.0,0.2,0.4,0.6,0.8,1.0]
+    numPoints = 100
+    fs0 = vmec.service.getFluxSurfaces('w7x_ref_9', 0.0, s, numPoints)
+    fs36 = vmec.service.getFluxSurfaces('w7x_ref_9', _np.pi/5, s, numPoints)
+
+    _plt.figure(figsize=(7.8,3.8))
+
+    _plt.subplot(121)
+    _plt.plot(fs0[0].x1, fs0[0].x3)
+    for i in range(len(fs0)):
+        _plt.plot(fs0[i].x1, fs0[i].x3)
+    _plt.title('flux surfaces at phi = 0°')
+    _plt.xlabel('R')
+    _plt.ylabel('Z')
+    ax1 = _plt.gca()
+    _plt.axis([4.5, 6.5, -1.0, 1.0])
+
+    _plt.subplot(122, sharex=ax1, sharey=ax1)
+    _plt.plot(fs36[0].x1, fs36[0].x3)
+    for i in range(len(fs36)):
+        _plt.plot(fs36[i].x1, fs36[i].x3)
+    _plt.title('flux surfaces at phi = 36°')
+    _plt.xlabel('R')
+    _plt.ylabel('Z')
+
+    for ax in _plt.gcf().axes:
+        ax.set_aspect('equal')
+
+    _plt.tight_layout()
+# end def
+
+# ========================================================================== #
+# ========================================================================== #
+
+def test_VMECrest():
     import matplotlib.pyplot as _plt
 
     _currents, fils = [], []
@@ -1344,6 +1412,15 @@ if __name__ == '__main__':
     _ax1.set_xlabel('R [m]')
     _ax1.set_ylabel('Z [m]')
     hFS.tight_layout()
+# end def
+
+
+if __name__=='__main__':
+    test_connection()
+    # write_wout_nc()
+
+
+    test_VMECrest()
 # endif
 
 # ========================================================================== #
