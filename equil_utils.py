@@ -9,7 +9,7 @@ Created on Mon Jul 25 17:02:07 2016
 
 # This section is to improve compatability between bython 2.7 and python 3x
 from __future__ import absolute_import, division, print_function, \
-    unicode_literals
+    with_statement, unicode_literals
 
 # ========================================================================== #
 
@@ -191,10 +191,12 @@ class VMECrest(VMEC_Struct):
             sfile = _os.path.join(self.homeurl, self.vmecnetcdf)
         # end if
         try:
+            with open(sfile, 'wb') as wout:
+                wout.write(self.getVMECwoutnc())
+        except:
             wout = open(sfile,'wb')
             wout.write(self.getVMECwoutnc())
             wout.close()
-        except:            pass
         finally:
             try:            wout.close() # just in case
             except:        pass
